@@ -16,7 +16,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
         {
             get
             {
-                return this.Provider.Agent.CombinePath(this.Provider.Agent.GetBaseWorkingDirectory(), @"ExtTemp\Git\lilgit.exe");
+                return this.Provider.Agent.CombinePath(this.Provider.Agent.GetBaseWorkingDirectory(), string.Format(@"ExtTemp\{0}\lilgit.exe", typeof(LilGitClient).Assembly.GetName().Name));
             }
         }
 
