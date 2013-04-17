@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{35C7CDB4-4034-4205-AE5B-0BF096D84B0D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Inedo.BuildMasterExtensions.GitHub</RootNamespace>
+    <AssemblyName>GitHub</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BuildMaster.Web.Controls">
+      <HintPath>packages\Inedo.BuildMaster.SDK.3.5\lib\net20\BuildMaster.Web.Controls.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="BuildMasterCore">
+      <HintPath>packages\Inedo.BuildMaster.SDK.3.5\lib\net20\BuildMasterCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="InedoLib">
+      <HintPath>packages\Inedo.BuildMaster.SDK.3.5\lib\net20\InedoLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Git\Clients\GitClientBase.cs">
+      <Link>SharedFromGit\Clients\GitClientBase.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\Clients\LilGitClient.cs">
+      <Link>SharedFromGit\Clients\LilGitClient.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\Clients\ProcessResults.cs">
+      <Link>SharedFromGit\Clients\ProcessResults.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\Clients\StandardGitClient.cs">
+      <Link>SharedFromGit\Clients\StandardGitClient.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\Extensions.cs">
+      <Link>SharedFromGit\Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\GitPath.cs">
+      <Link>SharedFromGit\GitPath.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\GitSourceControlProviderCommon.cs">
+      <Link>SharedFromGit\GitSourceControlProviderCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\IGitRepository.cs">
+      <Link>SharedFromGit\IGitRepository.cs</Link>
+    </Compile>
+    <Compile Include="..\Git\IGitSourceControlProvider.cs">
+      <Link>SharedFromGit\IGitSourceControlProvider.cs</Link>
+    </Compile>
+    <Compile Include="GitHub.cs" />
+    <Compile Include="GitHubCategory.cs" />
+    <Compile Include="GitHubIssue.cs" />
+    <Compile Include="GitHubIssueTrackingProvider.cs" />
+    <Compile Include="GitHubIssueTrackingProviderEditor.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="GitHubSourceControlProvider.cs" />
+    <Compile Include="GitHubSourceControlProviderEditor.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Json\JavaScriptArray.cs" />
+    <Compile Include="Json\JavaScriptObject.cs" />
+    <Compile Include="Json\JsonReader.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\Git\lilgit.exe">
+      <Link>lilgit.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if exist $(SolutionDir) cmd /c "del $(SolutionDir)..\..\BuildMaster\ExtensionLib\$(TargetName).bmx"
+if exist $(SolutionDir) $(SolutionDir)..\zip -j $(SolutionDir)..\..\BuildMaster\ExtensionLib\$(TargetName).bmx *.*</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
