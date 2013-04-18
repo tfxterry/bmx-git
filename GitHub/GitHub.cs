@@ -50,8 +50,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
         }
         public IEnumerable<JavaScriptObject> EnumIssues(int milestoneNumber, string ownerName, string repositoryName)
         {
-            var issues = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}", ownerName, repositoryName, milestoneNumber));
-            return issues.Cast<JavaScriptObject>();
+            var openIssues = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=open", ownerName, repositoryName, milestoneNumber));
+            var closedIssues = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=closed", ownerName, repositoryName, milestoneNumber));
+            return openIssues
+                .Cast<JavaScriptObject>()
+                .Concat(closedIssues.Cast<JavaScriptObject>());
         }
 
         public JavaScriptObject GetIssue(string issueId, string ownerName, string repositoryName)
