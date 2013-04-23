@@ -35,13 +35,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public IEnumerable<JavaScriptObject> EnumIssues(string milestone, string ownerName, string repositoryName)
         {
-            var milestones = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/milestones", ownerName, repositoryName));
-
-            int? milestoneNumber = milestones
-                .Cast<JavaScriptObject>()
-                .Where(m => string.Equals(m["title"].ToString(), milestone, StringComparison.OrdinalIgnoreCase))
-                .Select(m => m["number"] as int?)
-                .FirstOrDefault();
+            int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
 
             if (milestoneNumber == null)
                 return Enumerable.Empty<JavaScriptObject>();
@@ -69,15 +63,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         public void CreateMilestone(string milestone, string ownerName, string repositoryName)
         {
             var url = string.Format("https://api.github.com/repos/{0}/{1}/milestones", ownerName, repositoryName);
-
-            var milestones = (JavaScriptArray)this.Invoke("GET", url);
-
-            int? milestoneNumber = milestones
-                .Cast<JavaScriptObject>()
-                .Where(m => string.Equals(m["title"].ToString(), milestone, StringComparison.OrdinalIgnoreCase))
-                .Select(m => m["number"] as int?)
-                .FirstOrDefault();
-
+            int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
             if (milestoneNumber != null)
             {
                 // Milestone already exists
@@ -93,15 +79,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         public void CloseMilestone(string milestone, string ownerName, string repositoryName)
         {
             var url = string.Format("https://api.github.com/repos/{0}/{1}/milestones", ownerName, repositoryName);
-
-            var milestones = (JavaScriptArray)this.Invoke("GET", url);
-
-            int? milestoneNumber = milestones
-                .Cast<JavaScriptObject>()
-                .Where(m => string.Equals(m["title"].ToString(), milestone, StringComparison.OrdinalIgnoreCase))
-                .Select(m => m["number"] as int?)
-                .FirstOrDefault();
-
+            int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
             if (milestoneNumber == null)
             {
                 // Milestone not found
@@ -113,6 +91,30 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 url + "/" + milestoneNumber,
                 new { state = "closed" }
             );
+        }
+
+        private int? FindMilestone(string title, string ownerName, string repositoryName, bool likelyClosed)
+        {
+            var openMilestones = this.EnumMilestones(ownerName, repositoryName, "open");
+            var closedMilestones = this.EnumMilestones(ownerName, repositoryName, "closed");
+
+            IEnumerable<JavaScriptObject> milestones;
+            if (likelyClosed)
+                milestones = closedMilestones.Concat(openMilestones);
+            else
+                milestones = openMilestones.Concat(closedMilestones);
+
+            return milestones
+                .Where(m => string.Equals(m["title"].ToString(), title, StringComparison.OrdinalIgnoreCase))
+                .Select(m => m["number"] as int?)
+                .FirstOrDefault();
+        }
+        private IEnumerable<JavaScriptObject> EnumMilestones(string ownerName, string repositoryName, string state)
+        {
+            // Implemented using an iterator just to make it lazy
+            var milestones = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/milestones?state={2}", ownerName, repositoryName, state));
+            foreach (JavaScriptObject obj in milestones)
+                yield return obj;
         }
 
         private object Invoke(string method, string url)
