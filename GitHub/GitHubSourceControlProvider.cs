@@ -153,8 +153,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
             {
                 this.RepositoryName = (string)repo["name"];
                 var url = new UriBuilder((string)repo["clone_url"]);
-                url.UserName = userName;
-                url.Password = password;
+                url.UserName = Uri.EscapeDataString(userName);
+                url.Password = Uri.EscapeDataString(password);
                 this.RemoteRepositoryUrl = url.ToString();
                 this.RepositoryPath = GitPath.BuildPathFromUrl(url.ToString());
             }

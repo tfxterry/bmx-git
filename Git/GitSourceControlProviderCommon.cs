@@ -97,6 +97,7 @@ namespace Inedo.BuildMasterExtensions.Git
 
         public void ValidateConnection()
         {
+            this.EnsureRepoIsPresent(this.Repositories.First());
             this.GitClient.ValidateConnection();
         }
 
