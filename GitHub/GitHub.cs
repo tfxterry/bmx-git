@@ -124,6 +124,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         private object Invoke(string method, string url, object data)
         {
             var request = (HttpWebRequest)HttpWebRequest.Create(url);
+            request.UserAgent = "BuildMasterGitHubExtension/" + typeof(GitHub).Assembly.GetName().Version.ToString();
             request.Method = method;
             if (data != null)
             {
