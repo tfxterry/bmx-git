@@ -28,6 +28,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.txtOrganizationName.Text = provider.OrganizationName;
             this.txtUserName.Text = provider.UserName;
             this.txtPassword.Text = provider.Password;
+            this.chkUseStandardGitClient.Checked = provider.UseStandardGitClient;
         }
 
         public override ProviderBase CreateFromForm()
@@ -39,7 +40,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 GitExecutablePath = this.txtGitExecutablePath.Text,
                 OrganizationName = this.txtOrganizationName.Text,
                 UserName = this.txtUserName.Text,
-                Password = this.txtPassword.Text
+                Password = this.txtPassword.Text,
+                UseStandardGitClient = this.chkUseStandardGitClient.Checked
             };
         }
 

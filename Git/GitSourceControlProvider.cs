@@ -7,7 +7,6 @@ using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
-using Inedo.BuildMasterExtensions.Git.Clients;
 using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git
@@ -28,7 +27,6 @@ namespace Inedo.BuildMasterExtensions.Git
         /// </summary>
         public GitSourceControlProvider()
         {
-            this.wrappedProvider = new GitSourceControlProviderCommon(this, this.UseStandardGitClient ? this.GitExecutablePath : null);
         }
 
         /// <summary>
@@ -54,39 +52,50 @@ namespace Inedo.BuildMasterExtensions.Git
             get { return '/'; }
         }
 
+        private GitSourceControlProviderCommon WrappedProvider
+        {
+            get
+            {
+                if (this.wrappedProvider == null)
+                    this.wrappedProvider = new GitSourceControlProviderCommon(this, this.UseStandardGitClient ? this.GitExecutablePath : null);
+
+                return this.wrappedProvider;
+            }
+        }
+
         public override void GetLatest(string sourcePath, string targetPath)
         {
-            this.wrappedProvider.GetLatest(sourcePath, targetPath);
+            this.WrappedProvider.GetLatest(sourcePath, targetPath);
         }
 
         public void ApplyLabel(string label, string sourcePath)
         {
-            this.wrappedProvider.ApplyLabel(label, sourcePath);
+            this.WrappedProvider.ApplyLabel(label, sourcePath);
         }
 
         public void GetLabeled(string label, string sourcePath, string targetPath)
         {
-            this.wrappedProvider.GetLabeled(label, sourcePath, targetPath);
+            this.WrappedProvider.GetLabeled(label, sourcePath, targetPath);
         }
 
         public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
         {
-            return this.wrappedProvider.GetDirectoryEntryInfo(sourcePath);
+            return this.WrappedProvider.GetDirectoryEntryInfo(sourcePath);
         }
 
         public override byte[] GetFileContents(string filePath)
         {
-            return this.wrappedProvider.GetFileContents(filePath);
+            return this.WrappedProvider.GetFileContents(filePath);
         }
 
         public override bool IsAvailable()
         {
-            return this.wrappedProvider.IsAvailable();
+            return this.WrappedProvider.IsAvailable();
         }
 
         public override void ValidateConnection()
         {
-            this.wrappedProvider.ValidateConnection();
+            this.WrappedProvider.ValidateConnection();
         }
 
         public override string ToString()
@@ -99,7 +108,7 @@ namespace Inedo.BuildMasterExtensions.Git
 
         public byte[] GetCurrentRevision(string path)
         {
-            return this.wrappedProvider.GetCurrentRevision(path);
+            return this.WrappedProvider.GetCurrentRevision(path);
         }
 
         public void ExecuteClientCommand(string commandName, string arguments)

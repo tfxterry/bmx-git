@@ -25,6 +25,7 @@ namespace Inedo.BuildMasterExtensions.Git
 
             var provider = (GitSourceControlProvider)extension;
             this.txtGitExecutablePath.Text = provider.GitExecutablePath;
+            this.chkUseStandardGitClient.Checked = provider.UseStandardGitClient;
         }
 
         public override ProviderBase CreateFromForm()
@@ -33,7 +34,8 @@ namespace Inedo.BuildMasterExtensions.Git
 
             return new GitSourceControlProvider
             {
-                GitExecutablePath = this.txtGitExecutablePath.Text
+                GitExecutablePath = this.txtGitExecutablePath.Text,
+                UseStandardGitClient = this.chkUseStandardGitClient.Checked
             };
         }
 

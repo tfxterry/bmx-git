@@ -29,7 +29,6 @@ namespace Inedo.BuildMasterExtensions.GitHub
         /// </summary>
         public GitHubSourceControlProvider()
         {
-            this.wrappedProvider = new GitSourceControlProviderCommon(this, this.GitExecutablePath);
             this.github = new Lazy<GitHub>(() => new GitHub { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
             this.repositories = new Lazy<GitHubRepository[]>(
                 () => this.GitHub
@@ -62,6 +61,22 @@ namespace Inedo.BuildMasterExtensions.GitHub
         /// </summary>
         [Persistent]
         public string Password { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether to use the standard Git client.
+        /// </summary>
+        [Persistent]
+        public bool UseStandardGitClient { get; set; }
+
+        private GitSourceControlProviderCommon WrappedProvider
+        {
+            get
+            {
+                if (this.wrappedProvider == null)
+                    this.wrappedProvider = new GitSourceControlProviderCommon(this, this.UseStandardGitClient ? this.GitExecutablePath : null);
+
+                return this.wrappedProvider;
+            }
+        }
 
         public override char DirectorySeparator
         {
@@ -75,22 +90,22 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
         {
-            return this.wrappedProvider.GetDirectoryEntryInfo(sourcePath);
+            return this.WrappedProvider.GetDirectoryEntryInfo(sourcePath);
         }
 
         public override byte[] GetFileContents(string filePath)
         {
-            return this.wrappedProvider.GetFileContents(filePath);
+            return this.WrappedProvider.GetFileContents(filePath);
         }
 
         public override void GetLatest(string sourcePath, string targetPath)
         {
-            this.wrappedProvider.GetLatest(sourcePath, targetPath);
+            this.WrappedProvider.GetLatest(sourcePath, targetPath);
         }
 
         public override bool IsAvailable()
         {
-            return this.wrappedProvider.IsAvailable();
+            return this.WrappedProvider.IsAvailable();
         }
 
         public override string ToString()
@@ -108,22 +123,22 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public override void ValidateConnection()
         {
-            this.wrappedProvider.ValidateConnection();
+            this.WrappedProvider.ValidateConnection();
         }
 
         public void ApplyLabel(string label, string sourcePath)
         {
-            this.wrappedProvider.ApplyLabel(label, sourcePath);
+            this.WrappedProvider.ApplyLabel(label, sourcePath);
         }
 
         public void GetLabeled(string label, string sourcePath, string targetPath)
         {
-            this.wrappedProvider.GetLabeled(label, sourcePath, targetPath);
+            this.WrappedProvider.GetLabeled(label, sourcePath, targetPath);
         }
 
         public byte[] GetCurrentRevision(string path)
         {
-            return this.wrappedProvider.GetCurrentRevision(path);
+            return this.WrappedProvider.GetCurrentRevision(path);
         }
 
         IGitRepository[] IGitSourceControlProvider.Repositories
