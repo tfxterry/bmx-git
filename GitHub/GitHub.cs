@@ -4,7 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
-using Inedo.Linq;
+using System.Linq;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {

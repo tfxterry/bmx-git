@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Linq;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMasterExtensions.Git.Clients;
-using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
@@ -115,7 +115,7 @@ namespace Inedo.BuildMasterExtensions.Git
             this.EnsureRepoIsPresent(gitSourcePath.Repository);
             this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
 
-            return ((IFileOperationsExecuter)this.Agent).ReadAllFileBytes(gitSourcePath.PathOnDisk);
+            return ((IFileOperationsExecuter)this.Agent).ReadFileBytes(gitSourcePath.PathOnDisk);
         }
 
         public IGitRepository[] Repositories
@@ -142,7 +142,7 @@ namespace Inedo.BuildMasterExtensions.Git
         {
             var agent = (IFileOperationsExecuter)this.Agent;
 
-            if (!agent.DirectoryExists2(sourceFolder))
+            if (!agent.DirectoryExists(sourceFolder))
                 return;
 
             agent.CreateDirectory(targetFolder);
@@ -176,7 +176,7 @@ namespace Inedo.BuildMasterExtensions.Git
         {
             var fileOps = (IFileOperationsExecuter)this.Agent;
             var repoPath = repo.GetFullRepositoryPath(fileOps);
-            if (!fileOps.DirectoryExists2(repoPath) || !fileOps.DirectoryExists2(fileOps.CombinePath(repoPath, ".git")))
+            if (!fileOps.DirectoryExists(repoPath) || !fileOps.DirectoryExists(fileOps.CombinePath(repoPath, ".git")))
             {
                 fileOps.CreateDirectory(repoPath);
                 this.GitClient.CloneRepo(repo);

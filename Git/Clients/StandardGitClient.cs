@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Inedo.Linq;
+using System.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git.Clients
 {
