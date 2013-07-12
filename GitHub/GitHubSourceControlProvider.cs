@@ -16,8 +16,6 @@ namespace Inedo.BuildMasterExtensions.GitHub
     /// </summary>
     [ProviderProperties("GitHub", "Git integration optimized for use with GitHub.com; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitHubSourceControlProviderEditor))]
-    [RequiresInterface(typeof(IRemoteProcessExecuter))]
-    [RequiresInterface(typeof(IFileOperationsExecuter))]
     public sealed class GitHubSourceControlProvider : SourceControlProviderBase, IVersioningProvider, IRevisionProvider, IGitSourceControlProvider
     {
         private GitSourceControlProviderCommon wrappedProvider;
@@ -148,7 +146,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         IFileOperationsExecuter IGitSourceControlProvider.Agent
         {
-            get { return (IFileOperationsExecuter)this.Agent; }
+            get { return this.Agent.GetService<IFileOperationsExecuter>(); }
         }
 
         Git.Clients.ProcessResults IGitSourceControlProvider.ExecuteCommandLine(string fileName, string arguments, string workingDirectory)

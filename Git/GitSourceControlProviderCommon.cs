@@ -115,7 +115,7 @@ namespace Inedo.BuildMasterExtensions.Git
             this.EnsureRepoIsPresent(gitSourcePath.Repository);
             this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
 
-            return ((IFileOperationsExecuter)this.Agent).ReadFileBytes(gitSourcePath.PathOnDisk);
+            return this.Agent.ReadFileBytes(gitSourcePath.PathOnDisk);
         }
 
         public IGitRepository[] Repositories
@@ -140,7 +140,7 @@ namespace Inedo.BuildMasterExtensions.Git
         /// <param name="targetFolder">A path of a folder to copy files to.  If targetFolder doesn't exist, it is created.</param>
         private void CopyNonGitFiles(string sourceFolder, string targetFolder)
         {
-            var agent = (IFileOperationsExecuter)this.Agent;
+            var agent = this.Agent;
 
             if (!agent.DirectoryExists(sourceFolder))
                 return;
@@ -212,7 +212,7 @@ namespace Inedo.BuildMasterExtensions.Git
                 this.EnsureRepoIsPresent(path.Repository);
                 this.GitClient.UpdateLocalRepo(path.Repository, path.PathSpecifiedBranch, null);
 
-                var de = ((IFileOperationsExecuter)this.Agent).GetDirectoryEntry(new GetDirectoryEntryCommand()
+                var de = this.Agent.GetDirectoryEntry(new GetDirectoryEntryCommand()
                 {
                     Path = path.PathOnDisk,
                     Recurse = false,
