@@ -16,7 +16,7 @@ namespace Inedo.BuildMasterExtensions.Git
     /// </summary>
     [ProviderProperties("Git", "Supports most versions of Git; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitSourceControlProviderEditor))]
-    public sealed partial class GitSourceControlProvider : MultipleRepositoryProviderBase<GitRepository>, IVersioningProvider, IRevisionProvider, IClientCommandProvider, IGitSourceControlProvider
+    public sealed partial class GitSourceControlProvider : SourceControlProviderBase, IMultipleRepositoryProvider<GitRepository>, ILabelingProvider, IRevisionProvider, IClientCommandProvider, IGitSourceControlProvider
     {
         private GitSourceControlProviderCommon wrappedProvider;
 
@@ -176,6 +176,15 @@ namespace Inedo.BuildMasterExtensions.Git
         IGitRepository[] IGitSourceControlProvider.Repositories
         {
             get { return this.Repositories; }
+        }
+
+        [Persistent]
+        public GitRepository[] Repositories { get; set; }
+
+        RepositoryBase[] IMultipleRepositoryProvider.Repositories
+        {
+            get { return this.Repositories; }
+            set { this.Repositories = (GitRepository[])value; }
         }
 
         IFileOperationsExecuter IGitSourceControlProvider.Agent

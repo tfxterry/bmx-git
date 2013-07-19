@@ -11,7 +11,7 @@ namespace Inedo.BuildMasterExtensions.Git
     /// Used to share an implementation betweeen the Git provider and the GitHub provider
     /// since they have to inherit different base classes.
     /// </summary>
-    internal sealed class GitSourceControlProviderCommon : IVersioningProvider, IRevisionProvider, IGitSourceControlProvider
+    internal sealed class GitSourceControlProviderCommon : ILabelingProvider, IRevisionProvider, IGitSourceControlProvider
     {
         private IGitSourceControlProvider owner;
         private Lazy<GitClientBase> gitClient;
