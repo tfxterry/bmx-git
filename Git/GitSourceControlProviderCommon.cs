@@ -210,7 +210,7 @@ namespace Inedo.BuildMasterExtensions.Git
             else
             {
                 this.EnsureRepoIsPresent(path.Repository);
-                this.GitClient.UpdateLocalRepo(path.Repository, path.PathSpecifiedBranch, null);
+                this.GitClient.UpdateLocalRepo(path.Repository, (path.PathSpecifiedBranch ?? string.Empty).Replace("\n", string.Empty), null);
 
                 var de = ((IFileOperationsExecuter)this.Agent).GetDirectoryEntry(new GetDirectoryEntryCommand()
                 {
