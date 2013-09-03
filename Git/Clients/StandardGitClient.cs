@@ -64,7 +64,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
 
         public override void CloneRepo(IGitRepository repo)
         {
-            throw new NotImplementedException();
+            this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"");
         }
 
         public override void ValidateConnection()
