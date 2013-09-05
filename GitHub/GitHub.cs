@@ -27,7 +27,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 url = new UriBuilder("https://api.github.com/user/repos");
 
             url.UserName = this.UserName;
-            url.Password = this.Password;
+            url.Password = HttpUtility.UrlEncode(this.Password);
 
             var jsArray = (JavaScriptArray)this.Invoke("GET", url.ToString());
             return jsArray.Cast<JavaScriptObject>();
