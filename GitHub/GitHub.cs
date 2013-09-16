@@ -22,9 +22,9 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             UriBuilder url;
             if (!string.IsNullOrEmpty(this.OrganizationName))
-                url = new UriBuilder(string.Format("https://api.github.com/orgs/{0}/repos", HttpUtility.UrlEncode(this.OrganizationName)));
+                url = new UriBuilder(string.Format("https://api.github.com/orgs/{0}/repos?per_page=500", HttpUtility.UrlEncode(this.OrganizationName)));
             else
-                url = new UriBuilder("https://api.github.com/user/repos");
+                url = new UriBuilder("https://api.github.com/user/repos?per_page=500");
 
             url.UserName = this.UserName;
             url.Password = this.Password;
