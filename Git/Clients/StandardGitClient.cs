@@ -49,17 +49,11 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
             this.ExecuteGitCommand(repo, "push", repo.RemoteRepositoryUrl, "--tags --quiet");
         }
 
-        public override byte[] GetLastCommit(IGitRepository repo, string branch)
+        public override GitCommit GetLastCommit(IGitRepository repo, string branch)
         {
             var rev = new byte[20];
             var revStr = this.ExecuteGitCommand(repo, "log -1", "--pretty=format:%H");
-            if (string.IsNullOrEmpty(revStr))
-                return rev;
-
-            for (int i = 0; i < rev.Length; i++)
-                rev[i] = byte.Parse(revStr.Substring(i * 2, 2), NumberStyles.HexNumber);
-
-            return rev;
+            return new GitCommit(revStr);
         }
 
         public override void CloneRepo(IGitRepository repo)

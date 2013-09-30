@@ -84,7 +84,7 @@ namespace Inedo.BuildMasterExtensions.Git
             this.CopyNonGitFiles(gitSourcePath.PathOnDisk, targetPath);
         }
 
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             var gitSourcePath = new GitPath(this, path);
             if (gitSourcePath.Repository == null)

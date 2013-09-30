@@ -104,7 +104,7 @@ namespace Inedo.BuildMasterExtensions.Git
                 return "Git";
         }
 
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             return this.WrappedProvider.GetCurrentRevision(path);
         }

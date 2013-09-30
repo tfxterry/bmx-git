@@ -15,7 +15,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
         public abstract IEnumerable<string> EnumBranches(IGitRepository repo);
         public abstract void UpdateLocalRepo(IGitRepository repo, string branch, string tag);
         public abstract void ApplyTag(IGitRepository repo, string tag);
-        public abstract byte[] GetLastCommit(IGitRepository repo, string branch);
+        public abstract GitCommit GetLastCommit(IGitRepository repo, string branch);
         public abstract void CloneRepo(IGitRepository repo);
         public abstract void ValidateConnection();
 

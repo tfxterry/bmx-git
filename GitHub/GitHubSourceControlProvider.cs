@@ -134,7 +134,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.WrappedProvider.GetLabeled(label, sourcePath, targetPath);
         }
 
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             return this.WrappedProvider.GetCurrentRevision(path);
         }
