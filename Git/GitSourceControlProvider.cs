@@ -184,7 +184,7 @@ namespace Inedo.BuildMasterExtensions.Git
         RepositoryBase[] IMultipleRepositoryProvider.Repositories
         {
             get { return this.Repositories; }
-            set { this.Repositories = (GitRepository[])value; }
+            set { this.Repositories = value.Cast<GitRepository>().ToArray(); }
         }
 
         IFileOperationsExecuter IGitSourceControlProvider.Agent
