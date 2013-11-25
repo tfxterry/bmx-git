@@ -7,7 +7,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
     /// Represents a GitHub issue.
     /// </summary>
     [Serializable]
-    internal sealed class GitHubIssue : Issue
+    internal sealed class GitHubIssue : IssueTrackerIssue
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GitHubIssue"/> class.

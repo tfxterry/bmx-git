@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Inedo.Linq;
+using System.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git.Clients
 {
@@ -51,18 +51,14 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }
 
-        public override byte[] GetLastCommit(IGitRepository repo, string branch)
+        public override GitCommit GetLastCommit(IGitRepository repo, string branch)
         {
             var result = this.ExecuteGitCommand(repo, "lastcommit");
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
 
             var revStr = string.Join(string.Empty, result.Output.ToArray()).Trim();
-            var rev = new byte[revStr.Length / 2];
-            for (int i = 0; i < rev.Length; i++)
-                rev[i] = byte.Parse(revStr.Substring(i * 2, 2), NumberStyles.HexNumber);
-
-            return rev;
+            return new GitCommit(revStr);
         }
 
         public override void CloneRepo(IGitRepository repo)

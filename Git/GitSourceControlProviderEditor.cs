@@ -71,7 +71,7 @@ namespace Inedo.BuildMasterExtensions.Git
         {
             if (this.chkUseStandardGitClient.Checked && string.IsNullOrEmpty(this.txtGitExecutablePath.Text))
             {
-                e.ValidLevel = ValidationLevels.Error;
+                e.ValidLevel = ValidationLevel.Error;
                 e.Message = "You must provide a Git client to use if not using the built-in Git client.";
             }
         }

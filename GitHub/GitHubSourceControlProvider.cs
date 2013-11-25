@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
@@ -7,7 +8,6 @@ using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
 using Inedo.BuildMasterExtensions.Git;
-using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
@@ -16,9 +16,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
     /// </summary>
     [ProviderProperties("GitHub", "Git integration optimized for use with GitHub.com; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitHubSourceControlProviderEditor))]
-    [RequiresInterface(typeof(IRemoteProcessExecuter))]
-    [RequiresInterface(typeof(IFileOperationsExecuter))]
-    public sealed class GitHubSourceControlProvider : SourceControlProviderBase, IVersioningProvider, IRevisionProvider, IGitSourceControlProvider
+    public sealed class GitHubSourceControlProvider : SourceControlProviderBase, ILabelingProvider, IRevisionProvider, IGitSourceControlProvider
     {
         private GitSourceControlProviderCommon wrappedProvider;
         private Lazy<GitHubRepository[]> repositories;
@@ -136,7 +134,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.WrappedProvider.GetLabeled(label, sourcePath, targetPath);
         }
 
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             return this.WrappedProvider.GetCurrentRevision(path);
         }
@@ -148,7 +146,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         IFileOperationsExecuter IGitSourceControlProvider.Agent
         {
-            get { return (IFileOperationsExecuter)this.Agent; }
+            get { return this.Agent.GetService<IFileOperationsExecuter>(); }
         }
 
         Git.Clients.ProcessResults IGitSourceControlProvider.ExecuteCommandLine(string fileName, string arguments, string workingDirectory)

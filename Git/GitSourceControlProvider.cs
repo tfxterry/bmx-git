@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
-using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
@@ -16,9 +16,7 @@ namespace Inedo.BuildMasterExtensions.Git
     /// </summary>
     [ProviderProperties("Git", "Supports most versions of Git; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitSourceControlProviderEditor))]
-    [RequiresInterface(typeof(IRemoteProcessExecuter))]
-    [RequiresInterface(typeof(IFileOperationsExecuter))]
-    public sealed partial class GitSourceControlProvider : MultipleRepositoryProviderBase<GitRepository>, IVersioningProvider, IRevisionProvider, IClientCommandProvider, IGitSourceControlProvider
+    public sealed partial class GitSourceControlProvider : SourceControlProviderBase, IMultipleRepositoryProvider<GitRepository>, ILabelingProvider, IRevisionProvider, IClientCommandProvider, IGitSourceControlProvider
     {
         private GitSourceControlProviderCommon wrappedProvider;
 
@@ -106,7 +104,7 @@ namespace Inedo.BuildMasterExtensions.Git
                 return "Git";
         }
 
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             return this.WrappedProvider.GetCurrentRevision(path);
         }
@@ -180,9 +178,18 @@ namespace Inedo.BuildMasterExtensions.Git
             get { return this.Repositories; }
         }
 
+        [Persistent]
+        public GitRepository[] Repositories { get; set; }
+
+        RepositoryBase[] IMultipleRepositoryProvider.Repositories
+        {
+            get { return this.Repositories; }
+            set { this.Repositories = value.Cast<GitRepository>().ToArray(); }
+        }
+
         IFileOperationsExecuter IGitSourceControlProvider.Agent
         {
-            get { return (IFileOperationsExecuter)this.Agent; }
+            get { return this.Agent.GetService<IFileOperationsExecuter>(); }
         }
 
         Clients.ProcessResults IGitSourceControlProvider.ExecuteCommandLine(string fileName, string arguments, string workingDirectory)

@@ -7,7 +7,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
     /// Represents a GitHub issue tracking category (repository).
     /// </summary>
     [Serializable]
-    internal sealed class GitHubCategory : CategoryBase
+    internal sealed class GitHubCategory : IssueTrackerCategory
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="GitHubCategory"/> class.

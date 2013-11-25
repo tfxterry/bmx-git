@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Web;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.IssueTracking;
 using Inedo.BuildMaster.Web;
-using Inedo.Linq;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
@@ -81,18 +81,18 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             return "Provides issue tracking integration for GitHub.";
         }
-        public override Issue[] GetIssues(string releaseNumber)
+        public override IssueTrackerIssue[] GetIssues(string releaseNumber)
         {
             var filter = this.CategoryFilter;
             if (filter == null)
-                return new Issue[0];
+                return new IssueTrackerIssue[0];
 
             return this.GitHub
                 .EnumIssues(releaseNumber, filter.Owner, filter.Repository)
                 .Select(i => new GitHubIssue(i["number"].ToString(), (string)i["state"], (string)i["title"], (string)i["body"], releaseNumber, (string)i["html_url"]))
                 .ToArray();
         }
-        public override bool IsIssueClosed(Issue issue)
+        public override bool IsIssueClosed(IssueTrackerIssue issue)
         {
             if (issue == null)
                 throw new ArgumentNullException("issue");
@@ -115,7 +115,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 throw new NotAvailableException(ex.Message, ex);
             }
         }
-        public CategoryBase[] GetCategories()
+        public IssueTrackerCategory[] GetCategories()
         {
             return this.GitHub
                 .EnumRepositories()
@@ -173,7 +173,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             var filter = this.CategoryFilter;
             this.GitHub.CloseMilestone(releaseNumber, filter.Owner, filter.Repository);
         }
-        public override string GetIssueUrl(Issue issue)
+        public override string GetIssueUrl(IssueTrackerIssue issue)
         {
             if (issue == null)
                 throw new ArgumentNullException("issue");

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
-using Inedo.Linq;
+using System.Linq;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
