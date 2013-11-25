@@ -57,7 +57,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
 
         public override void CloneRepo(IGitRepository repo)
         {
-            this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"", "\"" + repo.RepositoryPath + "\"");
+            this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"", ".");
         }
 
         public override void ValidateConnection()
