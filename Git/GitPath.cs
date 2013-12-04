@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
@@ -11,10 +11,7 @@ namespace Inedo.BuildMasterExtensions.Git
     internal sealed class GitPath
     {
         private static readonly Regex PathSanitizerRegex = new Regex("[" + Regex.Escape(new string(Path.GetInvalidFileNameChars())) + "]", RegexOptions.Compiled);
-
-        public static char RepositorySeparatorChar = '|';
-
-        public static char BranchSeparatorChar = ':';
+        private static readonly Regex GitPathRegex = new Regex(@"^(?<1>[^|]+)(\|((?<2>[^:]*):)?(?<3>.*))?$", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         /// <summary>
         /// Gets the branch specified in the path, or null if no branch is specified.
@@ -43,33 +40,42 @@ namespace Inedo.BuildMasterExtensions.Git
 
         public GitPath(IGitSourceControlProvider provider, string sourcePath)
         {
-            if (provider == null) throw new ArgumentNullException("provider");
-            if (string.IsNullOrEmpty(sourcePath)) return;
+            if (provider == null)
+                throw new ArgumentNullException("provider");
+            if (string.IsNullOrEmpty(sourcePath))
+                return;
 
-            // pathParts => [repoName][repoPath]
-            var pathParts = (sourcePath ?? "").Split(new[] { GitPath.RepositorySeparatorChar }, 2);
-            if (pathParts.Length != 2) pathParts = new[] { pathParts[0], "" };
+            var match = GitPathRegex.Match(sourcePath);
+            if (!match.Success)
+                throw new ArgumentException("Invalid source path (missing repository name).");
 
-            this.Repository = provider.Repositories.SingleOrDefault(repo => repo.RepositoryName == pathParts[0]);
+            var repositoryName = match.Groups[1].Value;
+            var branchName = match.Groups[2].Value;
+            var repositoryPath = (match.Groups[3].Value ?? string.Empty).TrimStart('/');
+            IGitRepository repository;
 
-            // now split out the branch
-            var relativePathParts = pathParts[1].Split(new[] { GitPath.BranchSeparatorChar }, 2);
-            if (relativePathParts.Length == 2)
+            if (string.IsNullOrEmpty(branchName))
+                branchName = "master";
+            else
+                this.PathSpecifiedBranch = branchName;
+
+            if (!string.IsNullOrEmpty(repositoryName))
             {
-                this.PathSpecifiedBranch = relativePathParts[0];
-                this.RelativePath = relativePathParts[1];
+                repository = provider.Repositories.FirstOrDefault(r => r.RepositoryName == repositoryName);
+                if (repository == null)
+                    throw new ArgumentException("Invalid repository: " + repositoryName);
             }
             else
             {
-                this.RelativePath = pathParts[1];
+                repository = provider.Repositories.FirstOrDefault();
+                if (repository == null)
+                    throw new InvalidOperationException("No repositories are defined in this provider.");
             }
 
-            var agent = provider.Agent;
-            this.PathOnDisk = agent.CombinePath(this.Repository.GetFullRepositoryPath(agent), this.RelativePath);
-
-            this.Branch = this.PathSpecifiedBranch;
-            if (string.IsNullOrEmpty(this.Branch))
-                this.Branch = "master";
+            this.Branch = branchName;
+            this.Repository = repository;
+            this.RelativePath = repositoryPath;
+            this.PathOnDisk = provider.Agent.CombinePath(repository.GetFullRepositoryPath(provider.Agent), repositoryPath);
         }
 
         public override string ToString()
@@ -79,7 +85,7 @@ namespace Inedo.BuildMasterExtensions.Git
             if (this.PathSpecifiedBranch == null)
                 return this.Repository.RepositoryName;
 
-            return string.Format("{0}{1}{2}{3}{4}", this.Repository.RepositoryName, GitPath.RepositorySeparatorChar, this.PathSpecifiedBranch, GitPath.BranchSeparatorChar, this.RelativePath);
+            return string.Format("{0}|{1}:{2}", this.Repository.RepositoryName, this.PathSpecifiedBranch, this.RelativePath);
         }
 
         public static string BuildSourcePath(string repositoryName, string branch, string relativePath)
@@ -89,15 +95,14 @@ namespace Inedo.BuildMasterExtensions.Git
             if (string.IsNullOrEmpty(branch))
                 return repositoryName;
             if (relativePath == null)
-                return string.Format("{0}{1}{2}{3}", repositoryName, GitPath.RepositorySeparatorChar, branch, GitPath.BranchSeparatorChar);
+                return string.Format("{0}|{1}:", repositoryName, branch);
 
             // the DirectoryEntryInfo will include the directory of the repository (which is already handled by the repository name),
             // so it must be trimmmed from the front of the relative path in order for the Git actions to refer to the correct path
-            string rootPathToTrim = repositoryName + "/";
-            if (relativePath.StartsWith(rootPathToTrim))
-                relativePath = relativePath.Substring(rootPathToTrim.Length);
+            var match = Regex.Match(relativePath, @"^/?(?<1>[^/]+)/?(?<2>.*)$", RegexOptions.ExplicitCapture);
+            relativePath = match.Groups[2].Value;
 
-            return string.Format("{0}{1}{2}{3}{4}", repositoryName, GitPath.RepositorySeparatorChar, branch, GitPath.BranchSeparatorChar, relativePath);
+            return string.Format("{0}|{1}:{2}", repositoryName, branch, relativePath);
         }
 
         public static string BuildPathFromUrl(string url)
