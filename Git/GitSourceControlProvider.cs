@@ -153,9 +153,8 @@ namespace Inedo.BuildMasterExtensions.Git
 
             try
             {
-                // the only way to get client help in Git output to the command line is to pass in an invalid command...
-                return string.Join(Environment.NewLine, ExecuteCommandLine(this.GitExecutablePath, commandName + " -?", this.Repositories[0].RepositoryPath).Error.ToArray())
-                    .Replace("error: unknown switch `?'", "");
+                var docsPath = Path.Combine(Path.GetDirectoryName(typeof(GitSourceControlProvider).Assembly.Location), "Docs");
+                return File.ReadAllText(Path.Combine(docsPath, "git-" + commandName + ".txt"));
             }
             catch (Exception e)
             {
