@@ -146,22 +146,30 @@ namespace Inedo.BuildMasterExtensions.Git
                 return;
 
             agent.CreateDirectory(targetFolder);
-
+            char separator = agent.GetDirectorySeparator();
             var entry = agent.GetDirectoryEntry(new GetDirectoryEntryCommand
             {
                 Path = sourceFolder,
                 IncludeRootPath = true,
                 Recurse = true
             }).Entry;
-
-            char separator = agent.GetDirectorySeparator();
-            string[] filesToCopy = entry.Flatten().SelectMany(di => di.Files).Select(fi => fi.Path).Where(path => !path.Contains(@"\.git\")).ToArray();
-
+            
             Func<string, string, string> combinePaths = (p1, p2) =>
             {
                 return p1.TrimEnd(separator) + separator + p2.TrimStart(separator);
             };
 
+            string[] foldersToCreate = entry.Flatten().SelectMany(di => di.SubDirectories).Select(fi => fi.Path).Where(path => !path.Contains(separator + @".git")).ToArray().Select(name => combinePaths(targetFolder, name.Substring(sourceFolder.Length))).ToArray();
+            string[] filesToCopy = entry.Flatten().SelectMany(di => di.Files).Select(fi => fi.Path).Where(path => !path.Contains(separator + @".git")).ToArray();
+
+
+            foreach (string folder in foldersToCreate)
+            {
+                if (!agent.DirectoryExists(folder))
+                {
+                    agent.CreateDirectory(folder);
+                }
+            }
             agent.FileCopyBatch(
                 sourceFolder,
                 filesToCopy,
