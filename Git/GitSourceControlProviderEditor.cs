@@ -52,16 +52,14 @@ namespace Inedo.BuildMasterExtensions.Git
                 Required = false,
             };
 
-            var ctlExePathField = new StandardFormField("Git Executable Path:", this.txtGitExecutablePath);
+            var ctlExePathField = new SlimFormField("Git executable path:", this.txtGitExecutablePath);
 
             this.Controls.Add(
-                 new FormFieldGroup(
-                     "Git Client",
-                     "This extension includes a lightweight Git client for Windows. To use an alternate Git client, check the box and provide the path of the other client.",
-                     false,
-                     new StandardFormField(string.Empty, this.chkUseStandardGitClient),
-                     ctlExePathField
-                 )
+                 new SlimFormField("Git client:", this.chkUseStandardGitClient)
+                 {
+                     HelpText = "This extension includes a lightweight Git client for Windows. To use an alternate Git client, check the box and provide the path of the other client."
+                 },
+                 ctlExePathField
             );
 
             this.Controls.BindVisibility(this.chkUseStandardGitClient, ctlExePathField);

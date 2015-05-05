@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 
 namespace Inedo.BuildMasterExtensions.Git.Clients
 {
@@ -12,16 +13,16 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
         protected IGitSourceControlProvider Provider { get; private set; }
         protected abstract string GitExePath { get; }
 
-        public abstract IEnumerable<string> EnumBranches(IGitRepository repo);
-        public abstract void UpdateLocalRepo(IGitRepository repo, string branch, string tag);
-        public abstract void ApplyTag(IGitRepository repo, string tag);
-        public abstract GitCommit GetLastCommit(IGitRepository repo, string branch);
-        public abstract void CloneRepo(IGitRepository repo);
+        public abstract IEnumerable<string> EnumBranches(SourceRepository repo);
+        public abstract void UpdateLocalRepo(SourceRepository repo, string branch, string tag);
+        public abstract void ApplyTag(SourceRepository repo, string tag);
+        public abstract GitCommit GetLastCommit(SourceRepository repo, string branch);
+        public abstract void CloneRepo(SourceRepository repo);
         public abstract void ValidateConnection();
 
-        protected ProcessResults ExecuteGitCommand(IGitRepository repo, string command, params string[] args)
+        protected ProcessResults ExecuteGitCommand(SourceRepository repo, string command, params string[] args)
         {
-            return this.Provider.ExecuteCommandLine(this.GitExePath, command + " " + string.Join(" ", args), repo.GetFullRepositoryPath(this.Provider.Agent));
+            return this.Provider.ExecuteCommandLine(this.GitExePath, command + " " + string.Join(" ", args), repo.GetDiskPath(this.Provider.Agent));
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
@@ -11,7 +12,7 @@ namespace Inedo.BuildMasterExtensions.Git
     /// Used to share an implementation betweeen the Git provider and the GitHub provider
     /// since they have to inherit different base classes.
     /// </summary>
-    internal sealed class GitSourceControlProviderCommon : ILabelingProvider, IRevisionProvider, IGitSourceControlProvider
+    internal sealed class GitSourceControlProviderCommon :  IGitSourceControlProvider
     {
         private IGitSourceControlProvider owner;
         private Lazy<GitClientBase> gitClient;
@@ -35,69 +36,126 @@ namespace Inedo.BuildMasterExtensions.Git
             get { return this.gitClient.Value; }
         }
 
-        public void GetLatest(string sourcePath, string targetPath)
+        public void GetLatest(SourceControlContext context, string targetPath)
         {
             if (targetPath == null)
                 throw new ArgumentNullException("targetPath");
+            if (context.Repository == null)
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Git path.", "sourcePath");
 
-            var gitSourcePath = new GitPath(this, sourcePath);
-            if (gitSourcePath.Repository == null)
-                throw new ArgumentException(sourcePath + " does not represent a valid Git path.", "sourcePath");
-
-            this.EnsureRepoIsPresent(gitSourcePath.Repository);
-            this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
-            this.CopyNonGitFiles(gitSourcePath.PathOnDisk, targetPath);
+            this.EnsureLocalRepository(context);
+            this.UpdateLocalRepository(context, null);
+            this.ExportFiles(context, targetPath);
         }
 
-        public DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
+        public DirectoryEntryInfo GetDirectoryEntryInfo(SourceControlContext context)
         {
-            return this.GetDirectoryEntryInfo(new GitPath(this, sourcePath));
+            return this.GetDirectoryEntryInfo((GitPath)context);
         }
 
-        public void ApplyLabel(string label, string sourcePath)
+        private DirectoryEntryInfo GetDirectoryEntryInfo(GitPath context)
+        {
+            if (context.Repository == null)
+            {
+                return new DirectoryEntryInfo(
+                    string.Empty,
+                    string.Empty,
+                    Repositories.Select(repo => new DirectoryEntryInfo(repo.Name, repo.Name, null, null)).ToArray(),
+                    null
+                );
+            }
+            else if (context.PathSpecifiedBranch == null)
+            {
+                this.EnsureLocalRepository(context);
+
+                return new DirectoryEntryInfo(
+                    context.Repository.Name,
+                    context.Repository.Name,
+                    this.GitClient.EnumBranches(context.Repository)
+                        .Select(branch => new DirectoryEntryInfo(branch, GitPath.BuildSourcePath(context.Repository.Name, branch, null), null, null))
+                        .ToArray(),
+                    null
+                );
+            }
+            else
+            {
+                this.EnsureLocalRepository(context);
+                this.UpdateLocalRepository(context, null);
+
+                var de = this.Agent.GetDirectoryEntry(new GetDirectoryEntryCommand()
+                {
+                    Path = context.WorkspaceDiskPath,
+                    Recurse = false,
+                    IncludeRootPath = false
+                }).Entry;
+
+                var subDirs = de.SubDirectories
+                    .Where(entry => !entry.Name.StartsWith(".git"))
+                    .Select(subdir => new DirectoryEntryInfo(subdir.Name, GitPath.BuildSourcePath(context.Repository.Name, context.PathSpecifiedBranch, subdir.Path.Replace('\\', '/')), null, null))
+                    .ToArray();
+
+                var files = de.Files
+                    .Select(file => new FileEntryInfo(file.Name, GitPath.BuildSourcePath(context.Repository.Name, context.PathSpecifiedBranch, file.Path.Replace('\\', '/'))))
+                    .ToArray();
+
+                return new DirectoryEntryInfo(
+                    de.Name,
+                    context.ToString(),
+                    subDirs,
+                    files
+                );
+            }
+        }
+
+        public void ApplyLabel(string label, SourceControlContext context)
         {
             if (string.IsNullOrEmpty(label))
                 throw new ArgumentNullException("label");
 
-            var gitSourcePath = new GitPath(this, sourcePath);
-            if (gitSourcePath.Repository == null)
-                throw new ArgumentException(sourcePath + " does not represent a valid Git path.", "sourcePath");
+            if (context.Repository == null)
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Git path.", "sourcePath");
 
-            this.EnsureRepoIsPresent(gitSourcePath.Repository);
-            this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
-            this.GitClient.ApplyTag(gitSourcePath.Repository, label);
+            this.EnsureLocalRepository(context);
+            this.UpdateLocalRepository(context, null);
+            this.GitClient.ApplyTag(context.Repository, label);
         }
 
-        public void GetLabeled(string label, string sourcePath, string targetPath)
+        public void GetLabeled(string label, SourceControlContext context, string targetPath)
         {
             if (string.IsNullOrEmpty(label))
                 throw new ArgumentNullException("label");
             if (string.IsNullOrEmpty(targetPath))
                 throw new ArgumentNullException("targetPath");
 
-            var gitSourcePath = new GitPath(this, sourcePath);
-            if (gitSourcePath.Repository == null)
-                throw new ArgumentException(sourcePath + " does not represent a valid Git path.", "sourcePath");
+            if (context.Repository == null)
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Git path.", "sourcePath");
 
-            this.EnsureRepoIsPresent(gitSourcePath.Repository);
-            this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, label);
-            this.CopyNonGitFiles(gitSourcePath.PathOnDisk, targetPath);
+            this.EnsureLocalRepository(context);
+            this.UpdateLocalRepository(context, label);
+            this.ExportFiles(context, targetPath);
         }
 
-        public object GetCurrentRevision(string path)
+        public object GetCurrentRevision(SourceControlContext context)
         {
-            var gitSourcePath = new GitPath(this, path);
-            if (gitSourcePath.Repository == null)
-                throw new ArgumentException(path + " does not represent a valid Git path.", "sourcePath");
+            if (context.Repository == null)
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Git path.", "sourcePath");
 
-            this.EnsureRepoIsPresent(gitSourcePath.Repository);
-            this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
-            return this.GitClient.GetLastCommit(gitSourcePath.Repository, gitSourcePath.Branch);
+            this.EnsureLocalRepository(context);
+            this.GitClient.UpdateLocalRepo(context.Repository, context.Branch, null);
+            return this.GitClient.GetLastCommit(context.Repository, context.Branch);
         }
 
         public void ValidateConnection()
         {
-            this.EnsureRepoIsPresent(this.Repositories.First());
+            foreach (var repo in this.Repositories)
+            {
+                if (!this.Agent.DirectoryExists(repo.GetDiskPath(this.Agent)))
+                {
+                    this.Agent.CreateDirectory(repo.GetDiskPath(this.Agent));
+                    this.GitClient.CloneRepo(repo);
+                }
+            }
+            
             this.GitClient.ValidateConnection();
         }
 
@@ -108,17 +166,58 @@ namespace Inedo.BuildMasterExtensions.Git
 
         public byte[] GetFileContents(string filePath)
         {
-            var gitSourcePath = new GitPath(this, filePath);
-            if (gitSourcePath.Repository == null)
+            var context = new GitPath(this, filePath);
+            if (context.Repository == null)
                 throw new ArgumentException(filePath + " does not represent a valid Git path.", "filePath");
 
-            this.EnsureRepoIsPresent(gitSourcePath.Repository);
-            this.GitClient.UpdateLocalRepo(gitSourcePath.Repository, gitSourcePath.Branch, null);
+            this.EnsureLocalRepository(context);
+            this.UpdateLocalRepository(context, null);
 
-            return this.Agent.ReadFileBytes(gitSourcePath.PathOnDisk);
+            return this.Agent.ReadFileBytes(context.WorkspaceDiskPath);
         }
 
-        public IGitRepository[] Repositories
+        public IEnumerable<string> EnumerateBranches(SourceControlContext context)
+        {
+            return this.GitClient.EnumBranches(context.Repository);
+        }
+
+        public void EnsureLocalRepository(SourceControlContext context)
+        {
+            var fileOps = (IFileOperationsExecuter)this.Agent;
+            var repoPath = context.Repository.GetDiskPath(fileOps);
+            if (!fileOps.DirectoryExists(repoPath) || !fileOps.DirectoryExists(fileOps.CombinePath(repoPath, ".git")))
+            {
+                fileOps.CreateDirectory(repoPath);
+                this.GitClient.CloneRepo(context.Repository);
+            }
+        }
+
+        public void UpdateLocalRepository(SourceControlContext context, string tag)
+        {
+            this.GitClient.UpdateLocalRepo(context.Repository, context.Branch, tag);
+        }
+
+        public void ExportFiles(SourceControlContext context, string targetDirectory)
+        {
+            this.CopyNonGitFiles(context.WorkspaceDiskPath, targetDirectory);
+        }
+
+        public void Clone(SourceControlContext context)
+        {
+            this.GitClient.CloneRepo(context.Repository);
+        }
+
+        public void DeleteWorkspace(SourceControlContext context)
+        {
+            this.Agent.ClearFolder(context.WorkspaceDiskPath);
+        }
+
+        public IEnumerable<string> EnumerateLabels(SourceControlContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public SourceRepository[] Repositories
         {
             get { return this.owner.Repositories; }
         }
@@ -165,7 +264,6 @@ namespace Inedo.BuildMasterExtensions.Git
             string[] foldersToCreate = entry.Flatten().SelectMany(di => di.SubDirectories).Select(fi => escapeSpecialChars(fi.Path)).Where(path => !path.Contains(separator + @".git")).ToArray().Select(name => combinePaths(targetFolder, name.Substring(sourceFolder.Length))).ToArray();
             string[] filesToCopy = entry.Flatten().SelectMany(di => di.Files).Select(fi => escapeSpecialChars(fi.Path)).Where(path => !path.Contains(separator + @".git")).ToArray();
 
-
             foreach (string folder in foldersToCreate)
             {
                 if (!agent.DirectoryExists(folder))
@@ -181,71 +279,6 @@ namespace Inedo.BuildMasterExtensions.Git
                 true,
                 true
              );
-        }
-
-        private void EnsureRepoIsPresent(IGitRepository repo)
-        {
-            var fileOps = (IFileOperationsExecuter)this.Agent;
-            var repoPath = repo.GetFullRepositoryPath(fileOps);
-            if (!fileOps.DirectoryExists(repoPath) || !fileOps.DirectoryExists(fileOps.CombinePath(repoPath, ".git")))
-            {
-                fileOps.CreateDirectory(repoPath);
-                this.GitClient.CloneRepo(repo);
-            }
-        }
-
-        private DirectoryEntryInfo GetDirectoryEntryInfo(GitPath path)
-        {
-            if (path.Repository == null)
-            {
-                return new DirectoryEntryInfo(
-                    string.Empty,
-                    string.Empty,
-                    Repositories.Select(repo => new DirectoryEntryInfo(repo.RepositoryName, repo.RepositoryName, null, null)).ToArray(),
-                    null
-                );
-            }
-            else if (path.PathSpecifiedBranch == null)
-            {
-                this.EnsureRepoIsPresent(path.Repository);
-
-                return new DirectoryEntryInfo(
-                    path.Repository.RepositoryName,
-                    path.Repository.RepositoryName,
-                    this.GitClient.EnumBranches(path.Repository)
-                        .Select(branch => new DirectoryEntryInfo(branch, GitPath.BuildSourcePath(path.Repository.RepositoryName, branch, null), null, null))
-                        .ToArray(),
-                    null
-                );
-            }
-            else
-            {
-                this.EnsureRepoIsPresent(path.Repository);
-                this.GitClient.UpdateLocalRepo(path.Repository, path.PathSpecifiedBranch, null);
-
-                var de = this.Agent.GetDirectoryEntry(new GetDirectoryEntryCommand()
-                {
-                    Path = path.PathOnDisk,
-                    Recurse = false,
-                    IncludeRootPath = false
-                }).Entry;
-
-                var subDirs = de.SubDirectories
-                    .Where(entry => !entry.Name.StartsWith(".git"))
-                    .Select(subdir => new DirectoryEntryInfo(subdir.Name, GitPath.BuildSourcePath(path.Repository.RepositoryName, path.PathSpecifiedBranch, subdir.Path.Replace('\\', '/')), null, null))
-                    .ToArray();
-
-                var files = de.Files
-                    .Select(file => new FileEntryInfo(file.Name, GitPath.BuildSourcePath(path.Repository.RepositoryName, path.PathSpecifiedBranch, file.Path.Replace('\\', '/'))))
-                    .ToArray();
-
-                return new DirectoryEntryInfo(
-                    de.Name,
-                    path.ToString(),
-                    subDirs,
-                    files
-                );
-            }
         }
     }
 }

@@ -1,7 +1,10 @@
 ﻿﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Inedo.BuildMaster.Extensibility.Agents;
+using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 
 namespace Inedo.BuildMasterExtensions.Git.Clients
 {
@@ -21,14 +24,14 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
             get { return this.gitExePath; }
         }
 
-        public override IEnumerable<string> EnumBranches(IGitRepository repo)
+        public override IEnumerable<string> EnumBranches(SourceRepository repo)
         {
             string stdout = this.ExecuteGitCommand(repo, "ls-remote --heads origin");
             return BranchParsingRegex.Matches(stdout).Cast<Match>()
                 .Select(match => match.Groups["branch"].Value);
         }
 
-        public override void UpdateLocalRepo(IGitRepository repo, string branch, string tag)
+        public override void UpdateLocalRepo(SourceRepository repo, string branch, string tag)
         {
             /* 
              *  git fetch origin <branch>    | Get all changesets for the specified branch but does not apply them
@@ -36,42 +39,42 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
              *  git clean -dfq               | Remove all non-Git versioned files and directories from the repository directory
              */
 
-            this.ExecuteGitCommand(repo, "fetch", repo.RemoteRepositoryUrl, branch, "--quiet");
+            this.ExecuteGitCommand(repo, "fetch", repo.RemoteUrl, branch, "--quiet");
             this.ExecuteGitCommand(repo, "reset --hard FETCH_HEAD --quiet");
             this.ExecuteGitCommand(repo, "clean -dfq");
         }
 
-        public override void ApplyTag(IGitRepository repo, string tag)
+        public override void ApplyTag(SourceRepository repo, string tag)
         {
             // tag the default branch (where -f replaces existing tag) with the value of label
             this.ExecuteGitCommand(repo, "tag -f", tag);
-            this.ExecuteGitCommand(repo, "push", repo.RemoteRepositoryUrl, "--tags --quiet");
+            this.ExecuteGitCommand(repo, "push", repo.RemoteUrl, "--tags --quiet");
         }
 
-        public override GitCommit GetLastCommit(IGitRepository repo, string branch)
+        public override GitCommit GetLastCommit(SourceRepository repo, string branch)
         {
             var rev = new byte[20];
             var revStr = this.ExecuteGitCommand(repo, "log -1", "--pretty=format:%H");
             return new GitCommit(revStr);
         }
 
-        public override void CloneRepo(IGitRepository repo)
+        public override void CloneRepo(SourceRepository repo)
         {
-            this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"", ".");
+            this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteUrl + "\"", ".");
         }
 
         public override void ValidateConnection()
         {
             foreach (var repo in this.Provider.Repositories)
             {
-                if (string.IsNullOrEmpty(repo.RemoteRepositoryUrl))
+                if (string.IsNullOrEmpty(repo.RemoteUrl))
                     this.ExecuteGitCommand(repo, "log -n 1"); // show commit log, limit to 1 commit
                 else
                     this.ExecuteGitCommand(repo, "ls-remote --heads origin"); // list remote branches
             }
         }
 
-        private new string ExecuteGitCommand(IGitRepository repo, string gitCommand, params string[] options)
+        private new string ExecuteGitCommand(SourceRepository repo, string gitCommand, params string[] options)
         {
             var results = base.ExecuteGitCommand(repo, gitCommand, options);
             if (results.ExitCode != 0)

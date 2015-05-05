@@ -58,42 +58,21 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 Required = false
             };
 
-            this.txtOrganizationName = new ValidatingTextBox { Required = false, DefaultText = "Optional", Width = 300 };
-            this.txtUserName = new ValidatingTextBox { Required = true, Width = 300 };
-            this.txtPassword = new PasswordTextBox { Required = true, Width = 300 };
+            this.txtOrganizationName = new ValidatingTextBox { Required = false, DefaultText = "Optional" };
+            this.txtUserName = new ValidatingTextBox { Required = true };
+            this.txtPassword = new PasswordTextBox { Required = true };
 
-            var ctlExePathField = new StandardFormField("Git Executable Path:", this.txtGitExecutablePath);
+            var ctlExePathField = new SlimFormField("Git executable path:", this.txtGitExecutablePath);
 
             this.Controls.Add(
-                new FormFieldGroup(
-                    "Organization",
-                    "Optionally provide the organization name which owns the repositories.",
-                    false,
-                    new StandardFormField(
-                        "Organization:",
-                        this.txtOrganizationName
-                    )
-                ),
-                new FormFieldGroup(
-                    "Authentication",
-                    "Provide the user name and password of a GitHub user which has access to the desired repositories.",
-                    false,
-                    new StandardFormField(
-                        "User Name:",
-                        this.txtUserName
-                    ),
-                    new StandardFormField(
-                        "Password:",
-                        this.txtPassword
-                    )
-                ),
-                new FormFieldGroup(
-                    "Git Client",
-                    "This extension includes a lightweight Git client for Windows. To use an alternate Git client, check the box and provide the path of the other client.",
-                    false,
-                    new StandardFormField(string.Empty, this.chkUseStandardGitClient),
-                    ctlExePathField
-                )
+                new SlimFormField("Organization name:", this.txtOrganizationName),
+                new SlimFormField("GitHub username:", this.txtUserName),
+                new SlimFormField("GitHub password:", this.txtPassword),
+                new SlimFormField("Git client:", this.chkUseStandardGitClient)
+                {
+                    HelpText = "This extension includes a lightweight Git client for Windows. To use an alternate Git client, check the box and provide the path of the other client."
+                },
+                ctlExePathField
             );
 
             this.Controls.BindVisibility(this.chkUseStandardGitClient, ctlExePathField);

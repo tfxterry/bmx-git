@@ -16,7 +16,7 @@ namespace Inedo.BuildMasterExtensions.Git
     /// </summary>
     [ProviderProperties("Git", "Supports most versions of Git; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitSourceControlProviderEditor))]
-    public sealed partial class GitSourceControlProvider : SourceControlProviderBase, IMultipleRepositoryProvider<GitRepository>, ILabelingProvider, IRevisionProvider, IClientCommandProvider, IGitSourceControlProvider
+    public sealed partial class GitSourceControlProvider : DistributedSourceControlProviderBase, IClientCommandProvider, IGitSourceControlProvider
     {
         private GitSourceControlProviderCommon wrappedProvider;
 
@@ -61,24 +61,10 @@ namespace Inedo.BuildMasterExtensions.Git
             }
         }
 
-        public override void GetLatest(string sourcePath, string targetPath)
-        {
-            this.WrappedProvider.GetLatest(sourcePath, targetPath);
-        }
-
-        public void ApplyLabel(string label, string sourcePath)
-        {
-            this.WrappedProvider.ApplyLabel(label, sourcePath);
-        }
-
-        public void GetLabeled(string label, string sourcePath, string targetPath)
-        {
-            this.WrappedProvider.GetLabeled(label, sourcePath, targetPath);
-        }
-
         public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
         {
-            return this.WrappedProvider.GetDirectoryEntryInfo(sourcePath);
+            var context = this.CreateSourceControlContext(sourcePath);
+            return this.WrappedProvider.GetDirectoryEntryInfo(context);
         }
 
         public override byte[] GetFileContents(string filePath)
@@ -99,14 +85,15 @@ namespace Inedo.BuildMasterExtensions.Git
         public override string ToString()
         {
             if (this.Repositories.Length == 1)
-                return "Git at " + Util.CoalesceStr(this.Repositories[0].RemoteRepositoryUrl, this.Repositories[0].RepositoryPath);
+                return "Git at " + Util.CoalesceStr(this.Repositories[0].RemoteUrl, this.Repositories[0].Name);
             else
                 return "Git";
         }
 
         public object GetCurrentRevision(string path)
         {
-            return this.WrappedProvider.GetCurrentRevision(path);
+            var context = this.CreateSourceControlContext(path);
+            return this.WrappedProvider.GetCurrentRevision(context);
         }
 
         public void ExecuteClientCommand(string commandName, string arguments)
@@ -172,20 +159,6 @@ namespace Inedo.BuildMasterExtensions.Git
             get { return true; }
         }
 
-        IGitRepository[] IGitSourceControlProvider.Repositories
-        {
-            get { return this.Repositories; }
-        }
-
-        [Persistent]
-        public GitRepository[] Repositories { get; set; }
-
-        RepositoryBase[] IMultipleRepositoryProvider.Repositories
-        {
-            get { return this.Repositories; }
-            set { this.Repositories = value.Cast<GitRepository>().ToArray(); }
-        }
-
         IFileOperationsExecuter IGitSourceControlProvider.Agent
         {
             get { return this.Agent.GetService<IFileOperationsExecuter>(); }
@@ -200,6 +173,61 @@ namespace Inedo.BuildMasterExtensions.Git
 
             var results = this.ExecuteCommandLine(fileName, arguments, workingDirectory);
             return new Clients.ProcessResults(results.ExitCode, results.Output, results.Error);
+        }
+
+        public override void ApplyLabel(string label, SourceControlContext context)
+        {
+            this.WrappedProvider.ApplyLabel(label, context);
+        }
+
+        public override SourceControlContext CreateSourceControlContext(object contextData)
+        {
+            return new GitPath(this, (string)contextData);
+        }
+
+        public override void EnsureLocalWorkspace(SourceControlContext context)
+        {
+            this.WrappedProvider.EnsureLocalRepository(context);
+        }
+
+        public override IEnumerable<string> EnumerateBranches(SourceControlContext context)
+        {
+            return this.WrappedProvider.EnumerateBranches(context);
+        }
+
+        public override void ExportFiles(SourceControlContext context, string targetDirectory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetCurrentRevision(SourceControlContext context)
+        {
+            return this.WrappedProvider.GetCurrentRevision(context);
+        }
+
+        public override void GetLatest(SourceControlContext context, string targetPath)
+        {
+            this.WrappedProvider.GetLatest(context, targetPath);
+        }
+
+        public override void GetLabeled(string label, SourceControlContext context, string targetPath)
+        {
+            this.WrappedProvider.GetLabeled(label, context, targetPath);
+        }
+
+        public override void UpdateLocalWorkspace(SourceControlContext context)
+        {
+            this.WrappedProvider.UpdateLocalRepository(context, null);
+        }
+
+        public override void DeleteWorkspace(SourceControlContext context)
+        {
+            this.WrappedProvider.DeleteWorkspace(context);
+        }
+
+        public override IEnumerable<string> EnumerateLabels(SourceControlContext context)
+        {
+            return this.WrappedProvider.EnumerateLabels(context);
         }
     }
 }

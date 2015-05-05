@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 
 namespace Inedo.BuildMasterExtensions.Git.Clients
 {
@@ -20,38 +21,38 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
             }
         }
 
-        public override IEnumerable<string> EnumBranches(IGitRepository repo)
+        public override IEnumerable<string> EnumBranches(SourceRepository repo)
         {
-            var result = this.ExecuteGitCommand(repo, "branches", "\"" + repo.RemoteRepositoryUrl + "\"");
+            var result = this.ExecuteGitCommand(repo, "branches", "\"" + repo.RemoteUrl + "\"");
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
 
             return result.Output;
         }
 
-        public override void UpdateLocalRepo(IGitRepository repo, string branch, string tag)
+        public override void UpdateLocalRepo(SourceRepository repo, string branch, string tag)
         {
             ProcessResults result;
 
             var refspec = string.Format("refs/heads/{0}", string.IsNullOrEmpty(branch) ? "master" : branch);
 
             if (string.IsNullOrEmpty(tag))
-                result = this.ExecuteGitCommand(repo, "get", "\"" + repo.RemoteRepositoryUrl + "\"", "\"" + refspec + "\"");
+                result = this.ExecuteGitCommand(repo, "get", "\"" + repo.RemoteUrl + "\"", "\"" + refspec + "\"");
             else
-                result = this.ExecuteGitCommand(repo, "gettag", "\"" + repo.RemoteRepositoryUrl + "\"", "\"" + tag + "\"", "\"" + refspec + "\"");
+                result = this.ExecuteGitCommand(repo, "gettag", "\"" + repo.RemoteUrl + "\"", "\"" + tag + "\"", "\"" + refspec + "\"");
 
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }
 
-        public override void ApplyTag(IGitRepository repo, string tag)
+        public override void ApplyTag(SourceRepository repo, string tag)
         {
-            var result = this.ExecuteGitCommand(repo, "tag", "\"" + repo.RemoteRepositoryUrl + "\"", "\"" + tag + "\"", "BuildMaster", "\"Tagged by BuildMaster\"");
+            var result = this.ExecuteGitCommand(repo, "tag", "\"" + repo.RemoteUrl + "\"", "\"" + tag + "\"", "BuildMaster", "\"Tagged by BuildMaster\"");
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }
 
-        public override GitCommit GetLastCommit(IGitRepository repo, string branch)
+        public override GitCommit GetLastCommit(SourceRepository repo, string branch)
         {
             var result = this.ExecuteGitCommand(repo, "lastcommit");
             if (result.ExitCode != 0)
@@ -61,9 +62,9 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
             return new GitCommit(revStr);
         }
 
-        public override void CloneRepo(IGitRepository repo)
+        public override void CloneRepo(SourceRepository repo)
         {
-            var result = this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"");
+            var result = this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteUrl + "\"");
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }

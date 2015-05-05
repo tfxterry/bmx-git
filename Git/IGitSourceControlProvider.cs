@@ -1,14 +1,16 @@
 ﻿using Inedo.BuildMaster.Extensibility.Agents;
+using Inedo.BuildMaster.Extensibility.Providers;
+using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMasterExtensions.Git.Clients;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
     internal interface IGitSourceControlProvider
     {
-        IGitRepository[] Repositories { get; }
+        SourceRepository[] Repositories { get; }
 
         IFileOperationsExecuter Agent { get; }
-
+        
         ProcessResults ExecuteCommandLine(string fileName, string arguments, string workingDirectory);
     }
 }
