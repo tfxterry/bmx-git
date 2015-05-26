@@ -78,7 +78,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             try
             {
-                //this.GetCategories();
+                this.GetRepositories().FirstOrDefault();
             }
             catch (Exception ex)
             {
@@ -127,6 +127,13 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             var filter = this.GetFilter(context);
             this.GitHub.CreateComment(issueId, filter.Owner, filter.Repository, commentText);
+        }
+
+        internal IEnumerable<GitHubRepository> GetRepositories()
+        {
+            return this.GitHub
+                .EnumRepositories()
+                .Select(r => new GitHubRepository(((Dictionary<string, object>)r["owner"])["login"].ToString(), r["name"].ToString()));
         }
 
         private GitHubApplicationFilter GetFilter(IssueTrackerConnectionContext context)

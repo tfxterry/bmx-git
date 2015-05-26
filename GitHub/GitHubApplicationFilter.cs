@@ -1,10 +1,12 @@
 ﻿using System;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
+using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
     [Serializable]
+    [CustomEditor(typeof(GitHubApplicationFilterEditor))]
     public sealed class GitHubApplicationFilter : IssueTrackerApplicationConfiguration
     {
         [Persistent]

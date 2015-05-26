@@ -92,6 +92,9 @@
     </Compile>
     <Compile Include="GitHub.cs" />
     <Compile Include="GitHubApplicationFilter.cs" />
+    <Compile Include="GitHubApplicationFilterEditor.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="GitHubCategory.cs" />
     <Compile Include="GitHubIssue.cs" />
     <Compile Include="GitHubIssueTrackingProvider.cs" />
@@ -99,6 +102,7 @@
     <Compile Include="GitHubIssueTrackingProviderEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="GitHubRepository.cs" />
     <Compile Include="GitHubSourceControlProvider.cs" />
     <Compile Include="GitHubSourceControlProviderEditor.cs">
       <SubType>ASPXCodeBehind</SubType>

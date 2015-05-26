@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Inedo.BuildMaster.Extensibility.Providers.IssueTracking;
 
@@ -42,9 +41,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         IssueTrackerCategory[] ICategoryFilterable.GetCategories()
         {
-            return this.GitHub
-                .EnumRepositories()
-                .Select(r => new GitHubCategory(((Dictionary<string, object>)r["owner"])["login"] + "/" + r["name"], (string)r["name"]))
+            return this.GetRepositories()
+                .Select(r => new GitHubCategory(r.Owner + "/" + r.Name, r.Name))
                 .ToArray();
         }
     }
