@@ -193,7 +193,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.WrappedProvider.UpdateLocalRepository(context, null);
         }
 
-        private static SourceRepository CreateSourceRepository(JavaScriptObject repo, string userName, string password)
+        private static SourceRepository CreateSourceRepository(Dictionary<string, object> repo, string userName, string password)
         {
             var repository = new SourceRepository();
 

@@ -1,32 +1,57 @@
 ﻿using System;
-using Inedo.BuildMaster.Extensibility.Providers.IssueTracking;
+using System.Collections.Generic;
+using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
-    /// <summary>
-    /// Represents a GitHub issue.
-    /// </summary>
     [Serializable]
-    internal sealed class GitHubIssue : IssueTrackerIssue
+    internal sealed class GitHubIssue : IIssueTrackerIssue
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="GitHubIssue"/> class.
-        /// </summary>
-        /// <param name="issueId">The issue ID.</param>
-        /// <param name="issueStatus">The issue status.</param>
-        /// <param name="issueTitle">The issue title.</param>
-        /// <param name="issueDescription">The issue description.</param>
-        /// <param name="releaseNumber">The release number of the issue.</param>
-        /// <param name="htmlUrl">The URL of the HTML issue description.</param>
-        public GitHubIssue(string issueId, string issueStatus, string issueTitle, string issueDescription, string releaseNumber, string htmlUrl)
-            : base(issueId, issueStatus, issueTitle, issueDescription, releaseNumber)
+        private Dictionary<string, object> remoteIssue;
+
+        public GitHubIssue(Dictionary<string, object> issue)
         {
-            this.HtmlUrl = htmlUrl;
+            this.remoteIssue = issue;
         }
 
-        /// <summary>
-        /// Gets or sets the URL of the HTML issue description.
-        /// </summary>
-        public string HtmlUrl { get; private set; }
+        public string Id
+        {
+            get { return this.remoteIssue["number"].ToString(); }
+        }
+        public string Title
+        {
+            get { return this.remoteIssue["title"].ToString(); }
+        }
+        public string Description
+        {
+            get { return this.remoteIssue["body"].ToString(); }
+        }
+        public bool IsClosed
+        {
+            get { return string.Equals(this.Status, "closed", StringComparison.OrdinalIgnoreCase); }
+        }
+        public string Status
+        {
+            get { return this.remoteIssue["state"].ToString(); }
+        }
+        public DateTime SubmittedDate
+        {
+            get
+            {
+                var created = this.remoteIssue["created_at"].ToString();
+                return DateTime.Parse(created).ToUniversalTime();
+            }
+        }
+        public string Submitter
+        {
+            get
+            {
+                var user = this.remoteIssue["user"] as Dictionary<string, object>;
+                if (user != null)
+                    return user["login"].ToString();
+                else
+                    return null;
+            }
+        }
     }
 }

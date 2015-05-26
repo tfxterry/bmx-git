@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Inedo.BuildMaster;
+using Inedo.BuildMaster.Extensibility;
+using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 using Inedo.BuildMaster.Extensibility.Providers;
-using Inedo.BuildMaster.Extensibility.Providers.IssueTracking;
 using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.GitHub
@@ -15,13 +16,10 @@ namespace Inedo.BuildMasterExtensions.GitHub
         "GitHub",
         "Provides issue tracking integration for GitHub.")]
     [CustomEditor(typeof(GitHubIssueTrackingProviderEditor))]
-    public sealed class GitHubIssueTrackingProvider : IssueTrackingProviderBase, ICategoryFilterable, IUpdatingProvider, IReleaseNumberCreator, IReleaseNumberCloser
+    public sealed partial class GitHubIssueTrackingProvider : IssueTrackerConnectionBase, IReleaseManager, IIssueCloser, IIssueCommenter
     {
         private Lazy<GitHub> github;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="GitHubIssueTrackingProvider"/> class.
-        /// </summary>
         public GitHubIssueTrackingProvider()
         {
             this.github = new Lazy<GitHub>(() => new GitHub { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
@@ -43,61 +41,33 @@ namespace Inedo.BuildMasterExtensions.GitHub
         [Persistent]
         public string Password { get; set; }
 
-        public string[] CategoryIdFilter { get; set; }
-        public string[] CategoryTypeNames
-        {
-            get { return new[] { "Repository" }; }
-        }
-        public bool CanAppendIssueDescriptions
-        {
-            get { return true; }
-        }
-        public bool CanChangeIssueStatuses
-        {
-            get { return true; }
-        }
-        public bool CanCloseIssues
-        {
-            get { return true; }
-        }
-
-        private FilterContext CategoryFilter
-        {
-            get
-            {
-                if (this.CategoryIdFilter == null || this.CategoryIdFilter.Length == 0 || string.IsNullOrEmpty(this.CategoryIdFilter[0]))
-                    return null;
-
-                var categoryParts = this.CategoryIdFilter[0].Split(new[] { '/' }, 2, StringSplitOptions.None);
-                return new FilterContext(categoryParts[0], categoryParts[1]);
-            }
-        }
         private GitHub GitHub
         {
             get { return this.github.Value; }
         }
 
-        public override string ToString()
+        public override ExtensionComponentDescription GetDescription()
         {
-            return "Provides issue tracking integration for GitHub.";
+            if (!string.IsNullOrWhiteSpace(this.OrganizationName))
+            {
+                return new ExtensionComponentDescription(
+                    "GitHub (",
+                    new Hilite(this.OrganizationName),
+                    ")"
+                );
+            }
+            else
+            {
+                return new ExtensionComponentDescription("GitHub");
+            }
         }
-        public override IssueTrackerIssue[] GetIssues(string releaseNumber)
+        public override IEnumerable<IIssueTrackerIssue> EnumerateIssues(IssueTrackerConnectionContext context)
         {
-            var filter = this.CategoryFilter;
-            if (filter == null)
-                return new IssueTrackerIssue[0];
+            var filter = this.GetFilter(context);
 
             return this.GitHub
-                .EnumIssues(releaseNumber, filter.Owner, filter.Repository)
-                .Select(i => new GitHubIssue(i["number"].ToString(), (string)i["state"], (string)i["title"], (string)i["body"], releaseNumber, (string)i["html_url"]))
-                .ToArray();
-        }
-        public override bool IsIssueClosed(IssueTrackerIssue issue)
-        {
-            if (issue == null)
-                throw new ArgumentNullException("issue");
-
-            return string.Equals(issue.IssueStatus, "closed", StringComparison.OrdinalIgnoreCase);
+                .EnumIssues(context.ReleaseNumber, filter.Owner, filter.Repository)
+                .Select(i => new GitHubIssue(i));
         }
         public override bool IsAvailable()
         {
@@ -108,89 +78,60 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             try
             {
-                this.GetCategories();
+                //this.GetCategories();
             }
             catch (Exception ex)
             {
                 throw new NotAvailableException(ex.Message, ex);
             }
         }
-        public IssueTrackerCategory[] GetCategories()
+
+        void IReleaseManager.CreateRelease(IssueTrackerConnectionContext context)
         {
-            return this.GitHub
-                .EnumRepositories()
-                .Select(r => new GitHubCategory(((JavaScriptObject)r["owner"])["login"] + "/" + r["name"], (string)r["name"]))
-                .ToArray();
+            var filter = this.GetFilter(context);
+            this.GitHub.CreateMilestone(context.ReleaseNumber, filter.Owner, filter.Repository);
         }
-        public void AppendIssueDescription(string issueId, string textToAppend)
+        void IReleaseManager.DeployRelease(IssueTrackerConnectionContext context)
         {
-            if (string.IsNullOrEmpty(issueId))
-                throw new ArgumentNullException("issueId");
-            if (string.IsNullOrEmpty(textToAppend))
-                return;
-
-            var filter = this.CategoryFilter;
-
-            var issue = this.GitHub.GetIssue(issueId, filter.Owner, filter.Repository);
-            var desc = (string)issue["body"] ?? string.Empty;
-
-            if (!string.IsNullOrEmpty(desc))
-                desc += "\n" + textToAppend;
-            else
-                desc = textToAppend;
-
-            this.GitHub.UpdateIssue(issueId, filter.Owner, filter.Repository, new { body = desc });
+            var filter = this.GetFilter(context);
+            this.GitHub.CloseMilestone(context.ReleaseNumber, filter.Owner, filter.Repository);
         }
-        public void ChangeIssueStatus(string issueId, string newStatus)
-        {
-            if (string.IsNullOrEmpty(issueId))
-                throw new ArgumentNullException("issueId");
-            if (string.IsNullOrEmpty(newStatus))
-                throw new ArgumentNullException("newStatus");
-            if (!string.Equals(newStatus, "open", StringComparison.OrdinalIgnoreCase) && !string.Equals(newStatus, "closed", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Status must be either open or closed.");
 
-            var filter = this.CategoryFilter;
+        void IIssueCloser.CloseAllIssues(IssueTrackerConnectionContext context)
+        {
+            var issues = this.EnumerateIssues(context).ToList();
+            var filter = this.GetFilter(context);
+            foreach (var issue in issues)
+            {
+                this.GitHub.UpdateIssue(
+                    issue.Id,
+                    filter.Owner,
+                    filter.Repository,
+                    new { state = "closed" }
+                );
+            }
+        }
+        void IIssueCloser.CloseIssue(IssueTrackerConnectionContext context, string issueId)
+        {
+            var filter = this.GetFilter(context);
 
             this.GitHub.UpdateIssue(
                 issueId,
                 filter.Owner,
                 filter.Repository,
-                new { state = newStatus.ToLowerInvariant() }
+                new { state = "closed" }
             );
         }
-        public void CloseIssue(string issueId)
-        {
-            this.ChangeIssueStatus(issueId, "closed");
-        }
-        public void CreateReleaseNumber(string releaseNumber)
-        {
-            var filter = this.CategoryFilter;
-            this.GitHub.CreateMilestone(releaseNumber, filter.Owner, filter.Repository);
-        }
-        public void CloseReleaseNumber(string releaseNumber)
-        {
-            var filter = this.CategoryFilter;
-            this.GitHub.CloseMilestone(releaseNumber, filter.Owner, filter.Repository);
-        }
-        public override string GetIssueUrl(IssueTrackerIssue issue)
-        {
-            if (issue == null)
-                throw new ArgumentNullException("issue");
 
-            return ((GitHubIssue)issue).HtmlUrl;
+        void IIssueCommenter.AddComment(IssueTrackerConnectionContext context, string issueId, string commentText)
+        {
+            var filter = this.GetFilter(context);
+            this.GitHub.CreateComment(issueId, filter.Owner, filter.Repository, commentText);
         }
 
-        private sealed class FilterContext
+        private GitHubApplicationFilter GetFilter(IssueTrackerConnectionContext context)
         {
-            public FilterContext(string owner, string repository)
-            {
-                this.Owner = HttpUtility.UrlEncode(owner);
-                this.Repository = HttpUtility.UrlEncode(repository);
-            }
-
-            public string Owner { get; private set; }
-            public string Repository { get; private set; }
+            return (GitHubApplicationFilter)context.ApplicationConfiguration ?? this.legacyFilter;
         }
     }
 }

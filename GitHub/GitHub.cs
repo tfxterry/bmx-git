@@ -1,24 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web;
-using System.Linq;
+using System.Web.Script.Serialization;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
     internal sealed class GitHub
     {
-        public GitHub()
-        {
-        }
-
         public string OrganizationName { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
 
-        public IEnumerable<JavaScriptObject> EnumRepositories()
+        public IEnumerable<Dictionary<string, object>> EnumRepositories()
         {
             UriBuilder url;
             if (!string.IsNullOrEmpty(this.OrganizationName))
@@ -26,34 +23,34 @@ namespace Inedo.BuildMasterExtensions.GitHub
             else
                 url = new UriBuilder("https://api.github.com/user/repos?per_page=500");
 
-            url.UserName = this.UserName;
-            url.Password = HttpUtility.UrlEncode(this.Password);
+            url.UserName = Uri.EscapeDataString(this.UserName);
+            url.Password = Uri.EscapeDataString(this.Password);
 
-            var jsArray = (JavaScriptArray)this.Invoke("GET", url.ToString());
-            return jsArray.Cast<JavaScriptObject>();
+            var results = (IEnumerable<object>)this.Invoke("GET", url.ToString());
+            return results.Cast<Dictionary<string, object>>();
         }
 
-        public IEnumerable<JavaScriptObject> EnumIssues(string milestone, string ownerName, string repositoryName)
+        public IEnumerable<Dictionary<string, object>> EnumIssues(string milestone, string ownerName, string repositoryName)
         {
             int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
 
             if (milestoneNumber == null)
-                return Enumerable.Empty<JavaScriptObject>();
+                return Enumerable.Empty<Dictionary<string, object>>();
 
             return this.EnumIssues((int)milestoneNumber, ownerName, repositoryName);
         }
-        public IEnumerable<JavaScriptObject> EnumIssues(int milestoneNumber, string ownerName, string repositoryName)
+        public IEnumerable<Dictionary<string, object>> EnumIssues(int milestoneNumber, string ownerName, string repositoryName)
         {
-            var openIssues = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=open", ownerName, repositoryName, milestoneNumber));
-            var closedIssues = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=closed", ownerName, repositoryName, milestoneNumber));
-            return openIssues
-                .Cast<JavaScriptObject>()
-                .Concat(closedIssues.Cast<JavaScriptObject>());
-        }
+            var openIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=open", ownerName, repositoryName, milestoneNumber));
+            var closedIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=closed", ownerName, repositoryName, milestoneNumber));
 
-        public JavaScriptObject GetIssue(string issueId, string ownerName, string repositoryName)
+            return openIssues
+                .Cast<Dictionary<string, object>>()
+                .Concat(closedIssues.Cast<Dictionary<string, object>>());
+        }
+        public Dictionary<string, object> GetIssue(string issueId, string ownerName, string repositoryName)
         {
-            return (JavaScriptObject)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}", ownerName, repositoryName, issueId));
+            return (Dictionary<string, object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}", ownerName, repositoryName, issueId));
         }
         public void UpdateIssue(string issueId, string ownerName, string repositoryName, object update)
         {
@@ -93,12 +90,24 @@ namespace Inedo.BuildMasterExtensions.GitHub
             );
         }
 
+        public void CreateComment(string issueId, string ownerName, string repositoryName, string commentText)
+        {
+            this.Invoke(
+                "POST",
+                string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}/comments", Uri.EscapeDataString(ownerName), Uri.EscapeDataString(repositoryName), Uri.EscapeDataString(issueId)),
+                new
+                {
+                    body = commentText
+                }
+            );
+        }
+
         private int? FindMilestone(string title, string ownerName, string repositoryName, bool likelyClosed)
         {
             var openMilestones = this.EnumMilestones(ownerName, repositoryName, "open");
             var closedMilestones = this.EnumMilestones(ownerName, repositoryName, "closed");
 
-            IEnumerable<JavaScriptObject> milestones;
+            IEnumerable<Dictionary<string, object>> milestones;
             if (likelyClosed)
                 milestones = closedMilestones.Concat(openMilestones);
             else
@@ -109,11 +118,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 .Select(m => m["number"] as int?)
                 .FirstOrDefault();
         }
-        private IEnumerable<JavaScriptObject> EnumMilestones(string ownerName, string repositoryName, string state)
+        private IEnumerable<Dictionary<string, object>> EnumMilestones(string ownerName, string repositoryName, string state)
         {
             // Implemented using an iterator just to make it lazy
-            var milestones = (JavaScriptArray)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/milestones?state={2}", ownerName, repositoryName, state));
-            foreach (JavaScriptObject obj in milestones)
+            var milestones = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/milestones?state={2}", ownerName, repositoryName, state));
+            foreach (Dictionary<string, object> obj in milestones)
                 yield return obj;
         }
 
@@ -142,8 +151,10 @@ namespace Inedo.BuildMasterExtensions.GitHub
             {
                 using (var response = request.GetResponse())
                 using (var responseStream = response.GetResponseStream())
+                using (var reader = new StreamReader(responseStream))
                 {
-                    return JsonReader.ParseJson(new StreamReader(responseStream).ReadToEnd());
+                    var js = new JavaScriptSerializer();
+                    return js.DeserializeObject(reader.ReadToEnd());
                 }
             }
             catch (WebException ex)
