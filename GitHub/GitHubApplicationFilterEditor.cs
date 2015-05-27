@@ -18,7 +18,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             var filter = (GitHubApplicationFilter)extension;
 
-            this.ddlRepositories.SelectedValue = filter.Owner + "/" + filter.Repository;
+            if (!string.IsNullOrEmpty(filter.Owner) || !string.IsNullOrEmpty(filter.Repository))
+                this.ddlRepositories.SelectedValue = filter.Owner + "/" + filter.Repository;
         }
         public override IssueTrackerApplicationConfiguration CreateFromForm()
         {

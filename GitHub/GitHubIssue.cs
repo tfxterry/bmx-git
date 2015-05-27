@@ -53,5 +53,9 @@ namespace Inedo.BuildMasterExtensions.GitHub
                     return null;
             }
         }
+        public string Url
+        {
+            get { return this.remoteIssue["html_url"].ToString(); }
+        }
     }
 }

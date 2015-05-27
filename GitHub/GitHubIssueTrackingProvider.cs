@@ -85,6 +85,10 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 throw new NotAvailableException(ex.Message, ex);
             }
         }
+        public override IssueTrackerApplicationConfiguration GetDefaultApplicationConfiguration(int applicationId)
+        {
+            return new GitHubApplicationFilter();
+        }
 
         void IReleaseManager.CreateRelease(IssueTrackerConnectionContext context)
         {

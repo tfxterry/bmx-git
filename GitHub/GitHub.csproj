@@ -34,13 +34,11 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BuildMaster.Web.Controls, Version=4.7.0.23, Culture=neutral, PublicKeyToken=112cfb71329714a6, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="BuildMaster.Web.Controls">
       <HintPath>..\packages\Inedo.BuildMaster.SDK.4.7\lib\net40\BuildMaster.Web.Controls.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="BuildMasterCore, Version=4.7.0.23, Culture=neutral, PublicKeyToken=112cfb71329714a6, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="BuildMasterCore">
       <HintPath>..\packages\Inedo.BuildMaster.SDK.4.7\lib\net40\BuildMasterCore.dll</HintPath>
       <Private>False</Private>
     </Reference>
@@ -48,8 +46,7 @@
       <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="InedoLib, Version=193.1.0.0, Culture=neutral, PublicKeyToken=112cfb71329714a6, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="InedoLib">
       <HintPath>..\packages\Inedo.BuildMaster.SDK.4.7\lib\net40\InedoLib.dll</HintPath>
       <Private>False</Private>
     </Reference>
