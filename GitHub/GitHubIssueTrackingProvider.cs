@@ -22,7 +22,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public GitHubIssueTrackingProvider()
         {
-            this.github = new Lazy<GitHub>(() => new GitHub { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
+            this.github = new Lazy<GitHub>(() => new GitHub(this.ApiUrl) { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
         }
 
         /// <summary>
@@ -40,6 +40,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
         /// </summary>
         [Persistent]
         public string Password { get; set; }
+        /// <summary>
+        /// Gets or sets base URL for the API.
+        /// </summary>
+        [Persistent]
+        public string ApiUrl { get; set; }
 
         private GitHub GitHub
         {
@@ -85,7 +90,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 throw new NotAvailableException(ex.Message, ex);
             }
         }
-        public override IssueTrackerApplicationConfiguration GetDefaultApplicationConfiguration(int applicationId)
+        public override IssueTrackerApplicationConfigurationBase GetDefaultApplicationConfiguration(int applicationId)
         {
             return new GitHubApplicationFilter();
         }

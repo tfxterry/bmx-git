@@ -6,22 +6,32 @@ using System.Net;
 using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
+using Inedo.BuildMaster;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
     internal sealed class GitHub
     {
+        public const string GitHubComUrl = "https://api.github.com";
+
+        private string apiBaseUrl;
+
         public string OrganizationName { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
+
+        public GitHub(string apiBaseUrl)
+        {
+            this.apiBaseUrl = Util.CoalesceStr(apiBaseUrl, GitHub.GitHubComUrl).TrimEnd('/');
+        }
 
         public IEnumerable<Dictionary<string, object>> EnumRepositories()
         {
             UriBuilder url;
             if (!string.IsNullOrEmpty(this.OrganizationName))
-                url = new UriBuilder(string.Format("https://api.github.com/orgs/{0}/repos?per_page=500", HttpUtility.UrlEncode(this.OrganizationName)));
+                url = new UriBuilder(string.Format("{0}/orgs/{1}/repos?per_page=500", this.apiBaseUrl, HttpUtility.UrlEncode(this.OrganizationName)));
             else
-                url = new UriBuilder("https://api.github.com/user/repos?per_page=500");
+                url = new UriBuilder("{0}/user/repos?per_page=500");
 
             url.UserName = Uri.EscapeDataString(this.UserName);
             url.Password = Uri.EscapeDataString(this.Password);
@@ -41,8 +51,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
         }
         public IEnumerable<Dictionary<string, object>> EnumIssues(int milestoneNumber, string ownerName, string repositoryName)
         {
-            var openIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=open", ownerName, repositoryName, milestoneNumber));
-            var closedIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues?milestone={2}&state=closed", ownerName, repositoryName, milestoneNumber));
+            var openIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("{0}/repos/{1}/{2}/issues?milestone={3}&state=open", this.apiBaseUrl, ownerName, repositoryName, milestoneNumber));
+            var closedIssues = (IEnumerable<object>)this.Invoke("GET", string.Format("{0}/repos/{1}/{2}/issues?milestone={3}&state=closed", this.apiBaseUrl, ownerName, repositoryName, milestoneNumber));
 
             return openIssues
                 .Cast<Dictionary<string, object>>()
@@ -50,16 +60,16 @@ namespace Inedo.BuildMasterExtensions.GitHub
         }
         public Dictionary<string, object> GetIssue(string issueId, string ownerName, string repositoryName)
         {
-            return (Dictionary<string, object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}", ownerName, repositoryName, issueId));
+            return (Dictionary<string, object>)this.Invoke("GET", string.Format("{0}/repos/{1}/{2}/issues/{3}", this.apiBaseUrl, ownerName, repositoryName, issueId));
         }
         public void UpdateIssue(string issueId, string ownerName, string repositoryName, object update)
         {
-            this.Invoke("PATCH", string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}", ownerName, repositoryName, issueId), update);
+            this.Invoke("PATCH", string.Format("{0}/repos/{1}/{2}/issues/{3}", this.apiBaseUrl, ownerName, repositoryName, issueId), update);
         }
 
         public void CreateMilestone(string milestone, string ownerName, string repositoryName)
         {
-            var url = string.Format("https://api.github.com/repos/{0}/{1}/milestones", ownerName, repositoryName);
+            var url = string.Format("{0}/repos/{1}/{2}/milestones", this.apiBaseUrl, ownerName, repositoryName);
             int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
             if (milestoneNumber != null)
             {
@@ -75,7 +85,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         }
         public void CloseMilestone(string milestone, string ownerName, string repositoryName)
         {
-            var url = string.Format("https://api.github.com/repos/{0}/{1}/milestones", ownerName, repositoryName);
+            var url = string.Format("{0}/repos/{1}/{2}/milestones", this.apiBaseUrl, ownerName, repositoryName);
             int? milestoneNumber = this.FindMilestone(milestone, ownerName, repositoryName, false);
             if (milestoneNumber == null)
             {
@@ -94,7 +104,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             this.Invoke(
                 "POST",
-                string.Format("https://api.github.com/repos/{0}/{1}/issues/{2}/comments", Uri.EscapeDataString(ownerName), Uri.EscapeDataString(repositoryName), Uri.EscapeDataString(issueId)),
+                string.Format("{0}/repos/{1}/{2}/issues/{3}/comments", this.apiBaseUrl, Uri.EscapeDataString(ownerName), Uri.EscapeDataString(repositoryName), Uri.EscapeDataString(issueId)),
                 new
                 {
                     body = commentText
@@ -121,7 +131,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         private IEnumerable<Dictionary<string, object>> EnumMilestones(string ownerName, string repositoryName, string state)
         {
             // Implemented using an iterator just to make it lazy
-            var milestones = (IEnumerable<object>)this.Invoke("GET", string.Format("https://api.github.com/repos/{0}/{1}/milestones?state={2}", ownerName, repositoryName, state));
+            var milestones = (IEnumerable<object>)this.Invoke("GET", string.Format("{0}/repos/{1}/{2}/milestones?state={3}", this.apiBaseUrl, ownerName, repositoryName, state));
             foreach (Dictionary<string, object> obj in milestones)
                 yield return obj;
         }

@@ -14,14 +14,14 @@ namespace Inedo.BuildMasterExtensions.GitHub
     {
         private ComboSelect ddlRepositories;
 
-        public override void BindToForm(IssueTrackerApplicationConfiguration extension)
+        public override void BindToForm(IssueTrackerApplicationConfigurationBase extension)
         {
             var filter = (GitHubApplicationFilter)extension;
 
             if (!string.IsNullOrEmpty(filter.Owner) || !string.IsNullOrEmpty(filter.Repository))
                 this.ddlRepositories.SelectedValue = filter.Owner + "/" + filter.Repository;
         }
-        public override IssueTrackerApplicationConfiguration CreateFromForm()
+        public override IssueTrackerApplicationConfigurationBase CreateFromForm()
         {
             var parts = this.ddlRepositories.SelectedValue.Split(new[] { '/' }, 2, StringSplitOptions.None);
 

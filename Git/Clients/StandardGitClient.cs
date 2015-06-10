@@ -36,7 +36,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
         {
             /* 
              *  git fetch origin <branch>    | Get all changesets for the specified branch but does not apply them
-             *  git reset --hard FETCH_HEAD  | Resets to the HEAD revision and removes commits that haven't been pushed
+             *  git reset --hard <ref>       | Resets to the HEAD revision and removes commits that haven't been pushed
              *  git clean -dfq               | Remove all non-Git versioned files and directories from the repository directory
              */
 
@@ -56,7 +56,6 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
 
         public override GitCommit GetLastCommit(SourceRepository repo, string branch)
         {
-            var rev = new byte[20];
             var revStr = this.ExecuteGitCommand(repo, "log -1", "--pretty=format:%H");
             return new GitCommit(revStr);
         }

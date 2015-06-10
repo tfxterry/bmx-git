@@ -15,7 +15,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
     /// <summary>
     /// A provider that integrates with the Git source control system that is optimized for GitHub.
     /// </summary>
-    [ProviderProperties("GitHub", "Git integration optimized for use with GitHub.com; requires Git to be installed on the server for use with an SSH Agent.")]
+    [ProviderProperties("GitHub", "Git integration optimized for use with GitHub.com or GitHub Enterprise; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitHubSourceControlProviderEditor))]
     public sealed class GitHubSourceControlProvider : DistributedSourceControlProviderBase, IGitSourceControlProvider
     {
@@ -28,7 +28,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         /// </summary>
         public GitHubSourceControlProvider()
         {
-            this.github = new Lazy<GitHub>(() => new GitHub { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
+            this.github = new Lazy<GitHub>(() => new GitHub(this.ApiUrl) { OrganizationName = this.OrganizationName, UserName = this.UserName, Password = this.Password });
             this.repositories = new Lazy<SourceRepository[]>(
                 () => this.GitHub
                     .EnumRepositories()
@@ -65,6 +65,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
         /// </summary>
         [Persistent]
         public bool UseStandardGitClient { get; set; }
+        /// <summary>
+        /// Gets or sets the API URL.
+        /// </summary>
+        [Persistent]
+        public string ApiUrl { get; set; }
 
         private GitSourceControlProviderCommon WrappedProvider
         {

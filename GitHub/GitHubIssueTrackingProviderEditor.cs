@@ -8,6 +8,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
     {
         private ValidatingTextBox txtOrganizationName;
         private ValidatingTextBox txtUserName;
+        private ValidatingTextBox txtApiUrl;
         private PasswordTextBox txtPassword;
 
         public override void BindToForm(ProviderBase extension)
@@ -16,6 +17,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.txtOrganizationName.Text = provider.OrganizationName;
             this.txtUserName.Text = provider.UserName;
             this.txtPassword.Text = provider.Password;
+            this.txtApiUrl.Text = provider.ApiUrl;
         }
         public override ProviderBase CreateFromForm()
         {
@@ -23,12 +25,14 @@ namespace Inedo.BuildMasterExtensions.GitHub
             {
                 OrganizationName = this.txtOrganizationName.Text,
                 UserName = this.txtUserName.Text,
-                Password = this.txtPassword.Text
+                Password = this.txtPassword.Text,
+                ApiUrl = this.txtApiUrl.Text
             };
         }
 
         protected override void CreateChildControls()
         {
+            this.txtApiUrl = new ValidatingTextBox { DefaultText = GitHub.GitHubComUrl };
             this.txtOrganizationName = new ValidatingTextBox { DefaultText = "none" };
 
             this.txtUserName = new ValidatingTextBox { Required = true };
@@ -36,6 +40,10 @@ namespace Inedo.BuildMasterExtensions.GitHub
             this.txtPassword = new PasswordTextBox { Required = true };
 
             this.Controls.Add(
+                new SlimFormField("API base URL:", this.txtApiUrl)
+                {
+                    HelpText = "This provider connects to github.com by default. If connecting to GitHub Enterprise on a local network, specify the hostname of the API here."
+                },
                 new SlimFormField("Organization:", this.txtOrganizationName),
                 new SlimFormField("User name:", this.txtUserName),
                 new SlimFormField("Password:", this.txtPassword)

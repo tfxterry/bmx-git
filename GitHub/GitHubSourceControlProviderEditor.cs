@@ -11,6 +11,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
         private ValidatingTextBox txtOrganizationName;
         private ValidatingTextBox txtUserName;
         private PasswordTextBox txtPassword;
+        private ValidatingTextBox txtApiUrl;
         private CheckBox chkUseStandardGitClient;
         private SourceControlFileFolderPicker txtGitExecutablePath;
 
@@ -21,32 +22,33 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public override void BindToForm(ProviderBase extension)
         {
-            this.EnsureChildControls();
-
             var provider = (GitHubSourceControlProvider)extension;
+
             this.txtGitExecutablePath.Text = provider.GitExecutablePath;
             this.txtOrganizationName.Text = provider.OrganizationName;
             this.txtUserName.Text = provider.UserName;
             this.txtPassword.Text = provider.Password;
             this.chkUseStandardGitClient.Checked = provider.UseStandardGitClient;
+            this.txtApiUrl.Text = provider.ApiUrl;
         }
 
         public override ProviderBase CreateFromForm()
         {
-            this.EnsureChildControls();
-
             return new GitHubSourceControlProvider
             {
                 GitExecutablePath = this.txtGitExecutablePath.Text,
                 OrganizationName = this.txtOrganizationName.Text,
                 UserName = this.txtUserName.Text,
                 Password = this.txtPassword.Text,
-                UseStandardGitClient = this.chkUseStandardGitClient.Checked
+                UseStandardGitClient = this.chkUseStandardGitClient.Checked,
+                ApiUrl = this.txtApiUrl.Text
             };
         }
 
         protected override void CreateChildControls()
         {
+            this.txtApiUrl = new ValidatingTextBox() { DefaultText = GitHub.GitHubComUrl };
+
             this.chkUseStandardGitClient = new CheckBox
             {
                 Text = "Use Standard Git Client"
@@ -65,6 +67,10 @@ namespace Inedo.BuildMasterExtensions.GitHub
             var ctlExePathField = new SlimFormField("Git executable path:", this.txtGitExecutablePath);
 
             this.Controls.Add(
+                new SlimFormField("API base URL:", this.txtApiUrl)
+                {
+                    HelpText = "This provider connects to github.com by default. If connecting to GitHub Enterprise on a local network, specify the hostname of the API here."
+                },
                 new SlimFormField("Organization name:", this.txtOrganizationName),
                 new SlimFormField("GitHub username:", this.txtUserName),
                 new SlimFormField("GitHub password:", this.txtPassword),

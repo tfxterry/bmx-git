@@ -74,9 +74,7 @@
     <Compile Include="GitRepositoryEditor.cs" />
     <Compile Include="GitSourceControlProvider.cs" />
     <Compile Include="GitSourceControlProviderCommon.cs" />
-    <Compile Include="GitSourceControlProviderEditor.cs">
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
+    <Compile Include="GitSourceControlProviderEditor.cs" />
     <Compile Include="IGitRepository.cs" />
     <Compile Include="Clients\LilGitClient.cs" />
     <Compile Include="IGitSourceControlProvider.cs" />
