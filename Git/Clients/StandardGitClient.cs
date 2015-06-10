@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 
@@ -39,8 +40,10 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
              *  git clean -dfq               | Remove all non-Git versioned files and directories from the repository directory
              */
 
+            string @ref = Util.CoalesceStr(tag, "FETCH_HEAD");
+
             this.ExecuteGitCommand(repo, "fetch", repo.RemoteUrl, branch, "--quiet");
-            this.ExecuteGitCommand(repo, "reset --hard FETCH_HEAD --quiet");
+            this.ExecuteGitCommand(repo, "reset --hard", @ref, "--quiet");
             this.ExecuteGitCommand(repo, "clean -dfq");
         }
 
