@@ -128,7 +128,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         public override void ValidateConnection()
         {
-            this.WrappedProvider.ValidateConnection();
+            this.WrappedProvider.ValidateConnectionToFirstRepository();
         }
 
         public object GetCurrentRevision(string path)

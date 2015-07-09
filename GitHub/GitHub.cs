@@ -31,10 +31,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             if (!string.IsNullOrEmpty(this.OrganizationName))
                 url = new UriBuilder(string.Format("{0}/orgs/{1}/repos?per_page=500", this.apiBaseUrl, HttpUtility.UrlEncode(this.OrganizationName)));
             else
-                url = new UriBuilder("{0}/user/repos?per_page=500");
-
-            url.UserName = Uri.EscapeDataString(this.UserName);
-            url.Password = Uri.EscapeDataString(this.Password);
+                url = new UriBuilder(string.Format("{0}/user/repos?per_page=500", this.apiBaseUrl));
 
             var results = (IEnumerable<object>)this.Invoke("GET", url.ToString());
             return results.Cast<Dictionary<string, object>>();

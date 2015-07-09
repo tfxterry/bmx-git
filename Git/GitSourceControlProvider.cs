@@ -79,7 +79,7 @@ namespace Inedo.BuildMasterExtensions.Git
 
         public override void ValidateConnection()
         {
-            this.WrappedProvider.ValidateConnection();
+            this.WrappedProvider.ValidateConnectionToAllRepositories();
         }
 
         public override string ToString()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Inedo.BuildMaster.Extensibility.Agents;
+using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMasterExtensions.Git.Clients;
@@ -145,18 +146,41 @@ namespace Inedo.BuildMasterExtensions.Git
             return this.GitClient.GetLastCommit(context.Repository, context.Branch);
         }
 
-        public void ValidateConnection()
+        public void ValidateConnectionToAllRepositories()
         {
             foreach (var repo in this.Repositories)
             {
-                if (!this.Agent.DirectoryExists(repo.GetDiskPath(this.Agent)))
-                {
-                    this.Agent.CreateDirectory(repo.GetDiskPath(this.Agent));
-                    this.GitClient.CloneRepo(repo);
-                }
+                this.CreateAndCloneRepoIfNecessary(repo);
+                this.GitClient.ValidateConnection(repo);
             }
-            
-            this.GitClient.ValidateConnection();
+        }
+
+        public void ValidateConnectionToFirstRepository()
+        {
+            var repo = this.Repositories.FirstOrDefault();
+            if (repo == null)
+                throw new NotAvailableException("There are no repositories configured/found.");
+
+            this.CreateAndCloneRepoIfNecessary(repo);
+
+            this.GitClient.ValidateConnection(repo);
+        }
+
+        private void CreateAndCloneRepoIfNecessary(SourceRepository repo)
+        {
+            string repoDiskPath = repo.GetDiskPath(this.Agent);
+
+            if (!this.Agent.DirectoryExists(repoDiskPath))
+            {
+                this.Agent.CreateDirectory(repoDiskPath);
+                this.GitClient.CloneRepo(repo);
+            }
+            else
+            {
+                var entry = this.Agent.GetDirectoryEntry(new GetDirectoryEntryCommand() { IncludeRootPath = false, Path = repoDiskPath, Recurse = false }).Entry;
+                if (entry.FlattenWithFiles().Take(2).Count() < 2)
+                    this.GitClient.CloneRepo(repo);
+            }
         }
 
         public bool IsAvailable()

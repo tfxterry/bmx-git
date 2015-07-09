@@ -18,7 +18,7 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
         public abstract void ApplyTag(SourceRepository repo, string tag);
         public abstract GitCommit GetLastCommit(SourceRepository repo, string branch);
         public abstract void CloneRepo(SourceRepository repo);
-        public abstract void ValidateConnection();
+        public abstract void ValidateConnection(SourceRepository repo);
 
         protected ProcessResults ExecuteGitCommand(SourceRepository repo, string command, params string[] args)
         {

@@ -69,9 +69,8 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }
 
-        public override void ValidateConnection()
+        public override void ValidateConnection(SourceRepository repo)
         {
-            var repo = this.Provider.Repositories.FirstOrDefault();
             if (repo != null)
             {
                 var result = this.ExecuteGitCommand(repo, "lastcommit");

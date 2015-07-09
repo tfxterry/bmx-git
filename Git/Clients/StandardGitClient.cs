@@ -65,9 +65,9 @@ namespace Inedo.BuildMasterExtensions.Git.Clients
             this.ExecuteGitCommand(repo, "clone", "\"" + repo.RemoteUrl + "\"", ".");
         }
 
-        public override void ValidateConnection()
+        public override void ValidateConnection(SourceRepository repo)
         {
-            foreach (var repo in this.Provider.Repositories)
+            if (repo != null)
             {
                 if (string.IsNullOrEmpty(repo.RemoteUrl))
                     this.ExecuteGitCommand(repo, "log -n 1"); // show commit log, limit to 1 commit
