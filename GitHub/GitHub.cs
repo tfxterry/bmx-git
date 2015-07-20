@@ -121,7 +121,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
                 milestones = openMilestones.Concat(closedMilestones);
 
             return milestones
-                .Where(m => string.Equals(m["title"].ToString(), title, StringComparison.OrdinalIgnoreCase))
+                .Where(m => string.Equals((m["title"] ?? "").ToString(), title, StringComparison.OrdinalIgnoreCase))
                 .Select(m => m["number"] as int?)
                 .FirstOrDefault();
         }
@@ -129,6 +129,8 @@ namespace Inedo.BuildMasterExtensions.GitHub
         {
             // Implemented using an iterator just to make it lazy
             var milestones = (IEnumerable<object>)this.Invoke("GET", string.Format("{0}/repos/{1}/{2}/milestones?state={3}", this.apiBaseUrl, ownerName, repositoryName, state));
+            if (milestones == null)
+                yield break;
             foreach (Dictionary<string, object> obj in milestones)
                 yield return obj;
         }
