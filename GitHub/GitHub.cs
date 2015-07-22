@@ -168,6 +168,9 @@ namespace Inedo.BuildMasterExtensions.GitHub
             }
             catch (WebException ex)
             {
+                if (ex.Response == null)
+                    throw;
+
                 using (var responseStream = ex.Response.GetResponseStream())
                 {
                     throw new Exception(new StreamReader(responseStream).ReadToEnd());
