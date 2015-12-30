@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 
 namespace Inedo.BuildMasterExtensions.GitHub
@@ -17,6 +18,14 @@ namespace Inedo.BuildMasterExtensions.GitHub
         public string Id
         {
             get { return this.remoteIssue["number"].ToString(); }
+        }
+        public string Type
+        {
+            get
+            {
+                var labels = this.remoteIssue["labels"] as IEnumerable<Dictionary<string, object>>;
+                return labels?.FirstOrDefault()?["name"]?.ToString();
+            }
         }
         public string Title
         {
