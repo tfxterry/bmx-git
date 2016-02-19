@@ -1,8 +1,8 @@
 ﻿using System;
-using Inedo.BuildMaster;
-using Inedo.BuildMaster.Extensibility;
+using Inedo.BuildMaster.Documentation;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 using Inedo.BuildMaster.Web;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
@@ -16,9 +16,9 @@ namespace Inedo.BuildMasterExtensions.GitHub
         [Persistent]
         public string Repository { get; set; }
 
-        public override ExtensionComponentDescription GetDescription()
+        public override RichDescription GetDescription()
         {
-            return new ExtensionComponentDescription(
+            return new RichDescription(
                 "Repository: ", new Hilite(this.Repository), ", Owner: ", new Hilite(this.Owner)
             );
         }

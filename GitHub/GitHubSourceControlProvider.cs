@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
 using Inedo.BuildMasterExtensions.Git;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
     /// <summary>
     /// A provider that integrates with the Git source control system that is optimized for GitHub.
     /// </summary>
-    [ProviderProperties("GitHub", "Git integration optimized for use with GitHub.com or GitHub Enterprise; requires Git to be installed on the server for use with an SSH Agent.")]
+    [DisplayName("GitHub")]
+    [Description("Git integration optimized for use with GitHub.com or GitHub Enterprise; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitHubSourceControlProviderEditor))]
     public sealed class GitHubSourceControlProvider : DistributedSourceControlProviderBase, IGitSourceControlProvider
     {

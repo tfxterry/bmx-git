@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.UI.WebControls;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Data;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
@@ -12,7 +11,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 {
     internal sealed class GitHubApplicationFilterEditor : IssueTrackerApplicationConfigurationEditorBase
     {
-        private ComboSelect ddlRepositories;
+        private SelectList ddlRepositories;
 
         public override void BindToForm(IssueTrackerApplicationConfigurationBase extension)
         {
@@ -41,11 +40,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
             var repositories = GetProjects(application);
 
-            this.ddlRepositories = new ComboSelect();
+            this.ddlRepositories = new SelectList();
             this.ddlRepositories.Items.AddRange(
                 from r in repositories
                 orderby r.Name
-                select new ListItem(r.Name, r.Owner + "/" + r.Name)
+                select new SelectListItem(r.Name, r.Owner + "/" + r.Name)
             );
 
             this.Controls.Add(

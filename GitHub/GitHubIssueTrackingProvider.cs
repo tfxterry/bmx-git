@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using Inedo.BuildMaster;
-using Inedo.BuildMaster.Extensibility;
+using Inedo.BuildMaster.Documentation;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Web;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.GitHub
 {
     /// <summary>
     /// Issue tracking provider for GitHub.
     /// </summary>
-    [ProviderProperties(
-        "GitHub",
-        "Provides issue tracking integration for GitHub.")]
+    [DisplayName("GitHub")]
+    [Description("Provides issue tracking integration for GitHub.")]
     [CustomEditor(typeof(GitHubIssueTrackingProviderEditor))]
     public sealed partial class GitHubIssueTrackingProvider : IssueTrackerConnectionBase, IReleaseManager, IIssueCloser, IIssueCommenter
     {
@@ -51,11 +51,11 @@ namespace Inedo.BuildMasterExtensions.GitHub
             get { return this.github.Value; }
         }
 
-        public override ExtensionComponentDescription GetDescription()
+        public override RichDescription GetDescription()
         {
             if (!string.IsNullOrWhiteSpace(this.OrganizationName))
             {
-                return new ExtensionComponentDescription(
+                return new RichDescription(
                     "GitHub (",
                     new Hilite(this.OrganizationName),
                     ")"
@@ -63,7 +63,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
             }
             else
             {
-                return new ExtensionComponentDescription("GitHub");
+                return new RichDescription("GitHub");
             }
         }
         public override IEnumerable<IIssueTrackerIssue> EnumerateIssues(IssueTrackerConnectionContext context)

@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.Git
 {
     /// <summary>
     /// A provider that integrates with the Git source control system.
     /// </summary>
-    [ProviderProperties("Git", "Supports most versions of Git; requires Git to be installed on the server for use with an SSH Agent.")]
+    [DisplayName("Git")]
+    [Description("Supports most versions of Git; requires Git to be installed on the server for use with an SSH Agent.")]
     [CustomEditor(typeof(GitSourceControlProviderEditor))]
     public sealed partial class GitSourceControlProvider : DistributedSourceControlProviderBase, IClientCommandProvider, IGitSourceControlProvider
     {
