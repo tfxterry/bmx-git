@@ -33,8 +33,7 @@ namespace Inedo.BuildMasterExtensions.GitHub
 
         protected override void CreateChildControls()
         {
-            var application = StoredProcs.Applications_GetApplication(this.EditorContext.ApplicationId)
-                .Execute()
+            var application = DB.Applications_GetApplication(this.EditorContext.ApplicationId)
                 .Applications_Extended
                 .First();
 
