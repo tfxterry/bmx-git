@@ -1,5 +1,5 @@
 ﻿using System;
-using Inedo.BuildMaster.Documentation;
+using Inedo.Documentation;
 using Inedo.BuildMaster.Extensibility.IssueTrackerConnections;
 using Inedo.BuildMaster.Web;
 using Inedo.Serialization;
