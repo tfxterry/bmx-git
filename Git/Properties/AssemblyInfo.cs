@@ -14,3 +14,6 @@ using Inedo.BuildMaster.Extensibility;
 [assembly: AssemblyFileVersion("0.0")]
 [assembly: CLSCompliant(false)]
 [assembly: RequiredBuildMasterVersion("3.0.0")]
+#pragma warning disable 612, 618
+[assembly: BuildMasterAssembly]
+#pragma warning restore 612, 618
