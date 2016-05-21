@@ -24,7 +24,16 @@ namespace Inedo.BuildMasterExtensions.GitHub
             get
             {
                 var labels = this.remoteIssue["labels"] as IEnumerable<Dictionary<string, object>>;
-                return labels?.FirstOrDefault()?["name"]?.ToString();
+                if (labels != null)
+                {
+                    var firstOrDefault = labels.FirstOrDefault();
+                    if (firstOrDefault != null)
+                    {
+                        var o = firstOrDefault["name"];
+                        if (o != null) return o.ToString();
+                    }
+                }
+                return null;
             }
         }
         public string Title
